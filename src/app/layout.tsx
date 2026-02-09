@@ -16,6 +16,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Ianord Patch Notes",
   description: "Logiciel de gestion de notes de mises à jour",
+  icons: {
+    icon: "/logos/ianord.ico",
+  },
 };
 
 import { BrandHeader } from "@/components/BrandHeader";
