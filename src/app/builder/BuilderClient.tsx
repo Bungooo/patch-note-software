@@ -234,6 +234,8 @@ export default function BuilderClient({ initialData }: { initialData?: any }) {
                                                     <SelectItem value="CFA">CFA</SelectItem>
                                                     <SelectItem value="Back">Back</SelectItem>
                                                     <SelectItem value="Autre">Autre</SelectItem>
+                                                    <SelectItem value="Socle Admin">Socle Admin</SelectItem>
+                                                    <SelectItem value="Tablette">Tablette</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         )}

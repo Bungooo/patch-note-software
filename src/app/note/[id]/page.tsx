@@ -14,12 +14,14 @@ function getLogoPath(softwareName: string) {
     if (name.includes('webhoraire')) return '/logos-3d/webhoraire.svg';
     if (name.includes('webgerest')) return '/logos-3d/webgerest.svg';
     if (name.includes('tarrification') || name.includes('tarification')) return '/logos-3d/tarification.svg';
-    if (name.includes('inscription')) return '/logos-3d/Inscription – Gestionnaire.svg'; // Check file name case?
+    if (name.includes('inscription')) return '/logos-3d/Inscription – Gestionnaire.svg';
     if (name.includes('réservation') || name.includes('reservation')) return '/logos-3d/Réservation.svg';
     if (name.includes('back')) return '/logos-3d/Back.svg';
     if (name.includes('cfa')) return '/logos-3d/cfa.svg';
     if (name.includes('bo')) return '/logos-3d/bo.svg';
     if (name.includes('autre')) return '/logos-3d/Autre.svg';
+    if (name.includes('socle admin')) return '/logos-3d/Socle Admin.svg';
+    if (name.includes('tablette')) return '/logos-3d/Tablette.svg';
 
     return null;
 }
@@ -38,6 +40,8 @@ function getFlatLogoPath(softwareName: string) {
     if (name.includes('cfa')) return '/logos/CFA.svg';
     if (name.includes('bo')) return '/logos/BO.svg';
     if (name.includes('autre')) return '/logos/Autre.svg';
+    if (name.includes('socle admin')) return '/logos/Socle Admin.svg';
+    if (name.includes('tablette')) return '/logos/Tablette.svg';
 
     return null;
 }
