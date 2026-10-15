@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { ArrowDown, ArrowLeft, ArrowUp, Calendar as CalendarIcon, Check, Plus, PlusCircle, Save, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowLeft, ArrowUp, Calendar as CalendarIcon, Check, GripVertical, Plus, PlusCircle, Save, Trash2 } from "lucide-react"
 import { PatchNoteSchema, type PatchNoteValues } from "@/lib/schema"
 import { fullName, type Member, type PatchNote, type Software } from "@/lib/types"
 import { cn, parseLocalDate } from "@/lib/utils"
@@ -84,6 +84,10 @@ export default function BuilderClient({ note, members, softwares }: {
     const { fields, append, remove, move } = useFieldArray({ control: form.control, name: "sections" })
     // On mémorise les sections fermées : toutes sont ouvertes par défaut, y compris celles ajoutées ensuite
     const [closedSections, setClosedSections] = useState<string[]>([])
+    // Glisser-déposer des blocs logiciels (les flèches restent pour le clavier)
+    const [dragFrom, setDragFrom] = useState<number | null>(null)
+    const [dragOver, setDragOver] = useState<number | null>(null)
+    const endDrag = () => { setDragFrom(null); setDragOver(null) }
 
     const handleBack = () => {
         if (form.formState.isDirty) setShowExitAlert(true)
@@ -283,7 +287,7 @@ export default function BuilderClient({ note, members, softwares }: {
                     <CardHeader>
                         <StepTitle step={3}>Contenu</StepTitle>
                         <CardDescription>
-                            Les flèches ↑↓ règlent l&apos;ordre des logiciels dans le PDF.
+                            Glissez les logiciels par la poignée ⋮⋮ (ou utilisez les flèches ↑↓) pour régler leur ordre dans le PDF.
                             Astuce : collez une liste (Notion, Word…) dans un champ, chaque ligne devient une entrée. Le gras est conservé.
                         </CardDescription>
                     </CardHeader>
@@ -301,8 +305,41 @@ export default function BuilderClient({ note, members, softwares }: {
                                     const section = sections[index]
                                     const name = section?.name ?? ""
                                     return (
-                                        <AccordionItem key={field.id} value={field.id} className="border rounded-lg px-4">
+                                        <AccordionItem
+                                            key={field.id}
+                                            value={field.id}
+                                            className={cn(
+                                                "border rounded-lg px-4 transition-colors",
+                                                dragFrom === index && "opacity-50",
+                                                dragOver === index && dragFrom !== index && "border-primary bg-primary/5"
+                                            )}
+                                            onDragOver={e => {
+                                                if (dragFrom === null) return
+                                                e.preventDefault()
+                                                setDragOver(index)
+                                            }}
+                                            onDrop={e => {
+                                                e.preventDefault()
+                                                if (dragFrom !== null && dragFrom !== index) move(dragFrom, index)
+                                                endDrag()
+                                            }}
+                                        >
                                             <div className="flex items-center gap-1 [&>h3]:flex-1">
+                                                <span
+                                                    draggable
+                                                    title="Glisser pour déplacer"
+                                                    className="-ml-2 cursor-grab p-1 text-muted-foreground active:cursor-grabbing"
+                                                    onDragStart={e => {
+                                                        setDragFrom(index)
+                                                        e.dataTransfer.effectAllowed = "move"
+                                                        // On fait glisser tout le bloc, pas seulement la poignée
+                                                        const item = e.currentTarget.closest("[data-slot=accordion-item]")
+                                                        if (item) e.dataTransfer.setDragImage(item, 16, 16)
+                                                    }}
+                                                    onDragEnd={endDrag}
+                                                >
+                                                    <GripVertical className="h-4 w-4" />
+                                                </span>
                                                 <AccordionTrigger className="hover:no-underline py-4">
                                                     <span className="flex flex-1 items-center gap-2">
                                                         {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
