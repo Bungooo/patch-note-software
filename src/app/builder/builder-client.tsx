@@ -309,9 +309,8 @@ export default function BuilderClient({ note, members, softwares }: {
                                             key={field.id}
                                             value={field.id}
                                             className={cn(
-                                                "border rounded-lg px-4 transition-colors",
-                                                dragFrom === index && "opacity-50",
-                                                dragOver === index && dragFrom !== index && "border-primary bg-primary/5"
+                                                "relative border rounded-lg px-4",
+                                                dragFrom === index && "opacity-50"
                                             )}
                                             onDragOver={e => {
                                                 if (dragFrom === null) return
@@ -324,6 +323,16 @@ export default function BuilderClient({ note, members, softwares }: {
                                                 endDrag()
                                             }}
                                         >
+                                            {/* Ligne d'insertion : au-dessus en remontant, en dessous en descendant */}
+                                            {dragFrom !== null && dragOver === index && dragFrom !== index && (
+                                                <div
+                                                    aria-hidden
+                                                    className={cn(
+                                                        "pointer-events-none absolute inset-x-0 h-0.5 rounded-full bg-primary",
+                                                        dragFrom < index ? "-bottom-[7px]" : "-top-[7px]"
+                                                    )}
+                                                />
+                                            )}
                                             <div className="flex items-center gap-1 [&>h3]:flex-1">
                                                 <span
                                                     draggable
