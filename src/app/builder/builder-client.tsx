@@ -23,6 +23,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -39,6 +40,19 @@ const withCurrent = (options: string[], current?: string) =>
     current && !options.includes(current) ? [...options, current] : options
 
 const emptySection = { name: "", features: [], fixes: [] }
+
+// Traduit une erreur de validation en action à faire, en nommant le logiciel concerné
+function describeIssue(path: PropertyKey[], sections: PatchNoteValues["sections"]) {
+    const [field, i, list, j] = path
+    if (field === "author") return "Choisir l'auteur"
+    if (field === "date") return "Choisir la date de MEP"
+    if (field === "intro") return "Écrire une introduction (10 caractères minimum)"
+    if (typeof i !== "number") return "Ajouter au moins un logiciel"
+    const software = sections[i]?.name || `Logiciel n°${i + 1}`
+    if (list === "features") return `${software} : remplir ou supprimer la nouveauté n°${Number(j) + 1}`
+    if (list === "fixes") return `${software} : remplir ou supprimer le correctif n°${Number(j) + 1}`
+    return `${software} : sélectionner le logiciel`
+}
 
 export default function BuilderClient({ note, members, softwares }: {
     note: PatchNote | null
@@ -84,17 +98,39 @@ export default function BuilderClient({ note, members, softwares }: {
         else toast.error("Erreur lors de la suppression : " + result.error)
     }
 
-    const { isValid, isSubmitting } = form.formState
-    const sections = useWatch({ control: form.control, name: "sections" })
+    const { isSubmitting } = form.formState
+    const values = useWatch({ control: form.control }) as PatchNoteValues
+    const sections = values.sections ?? []
+    // Ce qu'il reste à faire avant de pouvoir enregistrer, affiché au survol du bouton
+    const todo = [...new Set(
+        (PatchNoteSchema.safeParse(values).error?.issues ?? []).map(issue => describeIssue(issue.path, sections))
+    )]
     const authorOptions = withCurrent(members.map(fullName), note?.author)
     const softwareNames = softwares.map(s => s.name)
     const findSoftware = softwareFinder(softwares)
 
-    const saveButton = (size?: "lg") => (
-        <Button onClick={form.handleSubmit(onSubmit)} size={size} disabled={!isValid || isSubmitting}>
-            <Save className="h-4 w-4" />Enregistrer
-        </Button>
-    )
+    const saveButton = (size?: "lg") => {
+        const button = (
+            <Button onClick={form.handleSubmit(onSubmit)} size={size} disabled={todo.length > 0 || isSubmitting}>
+                <Save className="h-4 w-4" />Enregistrer
+            </Button>
+        )
+        if (todo.length === 0) return button
+        return (
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    {/* Un bouton désactivé ne réagit pas au survol : l'info-bulle est portée par ce conteneur */}
+                    <span tabIndex={0} className="inline-flex">{button}</span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                    <p className="font-medium mb-1">Pour enregistrer :</p>
+                    <ul className="list-disc pl-4 space-y-0.5">
+                        {todo.map(t => <li key={t}>{t}</li>)}
+                    </ul>
+                </TooltipContent>
+            </Tooltip>
+        )
+    }
 
     return (
         <div className="py-10 pb-60">

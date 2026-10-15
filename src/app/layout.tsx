@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import { BrandHeader } from "@/components/brand-header";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const inter = Inter({
@@ -34,11 +35,13 @@ export default function RootLayout({
         <div className="print:hidden">
           <BrandHeader />
         </div>
-        <main className="min-h-screen w-full px-4 lg:w-[70%] lg:px-0 mx-auto grid grid-cols-12 gap-8 print:block print:w-full print:max-w-none print:px-0">
-          <div className="col-span-12 print:max-w-none">
-            {children}
-          </div>
-        </main>
+        <TooltipProvider delayDuration={200}>
+          <main className="min-h-screen w-full px-4 lg:w-[70%] lg:px-0 mx-auto grid grid-cols-12 gap-8 print:block print:w-full print:max-w-none print:px-0">
+            <div className="col-span-12 print:max-w-none">
+              {children}
+            </div>
+          </main>
+        </TooltipProvider>
         <Toaster position="bottom-right" richColors />
       </body>
     </html>
