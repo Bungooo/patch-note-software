@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Controller, useFieldArray, useForm, useWatch, type UseFormReturn } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { toast } from "sonner"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { ArrowLeft, Calendar as CalendarIcon, Plus, PlusCircle, Save, Trash2 } from "lucide-react"
@@ -12,6 +13,7 @@ import { fullName, type Member, type PatchNote, type Software } from "@/lib/type
 import { cn, parseLocalDate } from "@/lib/utils"
 import { DEFAULT_LOGO, softwareFinder } from "@/lib/logos"
 import { savePatchNote, deletePatchNote } from "./actions"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -71,15 +73,15 @@ export default function BuilderClient({ note, members, softwares }: {
             router.refresh()
             router.back()
         } else {
-            alert("Erreur lors de l'enregistrement : " + result.error)
+            toast.error("Erreur lors de l'enregistrement : " + result.error)
         }
     }
 
     const onDelete = async () => {
-        if (!note || !confirm("Êtes-vous sûr de vouloir supprimer cette note ?")) return
+        if (!note) return
         const result = await deletePatchNote(note.id)
         if (result.success) router.replace("/") // replace : pas de retour possible vers la note supprimée
-        else alert("Erreur lors de la suppression : " + result.error)
+        else toast.error("Erreur lors de la suppression : " + result.error)
     }
 
     const { isValid, isSubmitting } = form.formState
@@ -100,10 +102,12 @@ export default function BuilderClient({ note, members, softwares }: {
                 <Button variant="ghost" onClick={handleBack}><ArrowLeft className="h-4 w-4" />Retour</Button>
                 <div className="flex items-center gap-2">
                     {note && (
-                        <Button variant="destructive" onClick={onDelete}>
-                            <Trash2 className="h-4 w-4" />
-                            Supprimer la note
-                        </Button>
+                        <ConfirmDialog title="Supprimer cette note ?" description="Cette action est définitive." onConfirm={onDelete}>
+                            <Button variant="destructive">
+                                <Trash2 className="h-4 w-4" />
+                                Supprimer la note
+                            </Button>
+                        </ConfirmDialog>
                     )}
                     {saveButton()}
                 </div>
@@ -120,13 +124,13 @@ export default function BuilderClient({ note, members, softwares }: {
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2 flex flex-col">
-                                    <label className="text-sm font-medium">Auteur</label>
+                                    <label htmlFor="author" className="text-sm font-medium">Auteur</label>
                                     <Controller
                                         control={form.control}
                                         name="author"
                                         render={({ field }) => (
                                             <Select onValueChange={field.onChange} value={field.value}>
-                                                <SelectTrigger className="w-full">
+                                                <SelectTrigger id="author" className="w-full">
                                                     <SelectValue placeholder="Sélectionner l'auteur" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -148,7 +152,7 @@ export default function BuilderClient({ note, members, softwares }: {
                                     )}
                                 </div>
                                 <div className="space-y-2 flex flex-col">
-                                    <label className="text-sm font-medium">Date de MEP</label>
+                                    <label htmlFor="date" className="text-sm font-medium">Date de MEP</label>
                                     <Controller
                                         control={form.control}
                                         name="date"
@@ -156,6 +160,7 @@ export default function BuilderClient({ note, members, softwares }: {
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                     <Button
+                                                        id="date"
                                                         variant="outline"
                                                         className={cn(
                                                             "w-full justify-start text-left font-normal",
@@ -182,8 +187,8 @@ export default function BuilderClient({ note, members, softwares }: {
                                 </div>
                             </div>
                             <div className="space-y-2 flex flex-col">
-                                <label className="text-sm font-medium">Introduction</label>
-                                <Textarea {...form.register("intro")} className="min-h-[100px]" />
+                                <label htmlFor="intro" className="text-sm font-medium">Introduction</label>
+                                <Textarea id="intro" {...form.register("intro")} className="min-h-[100px]" />
                             </div>
                         </CardContent>
                     </Card>
@@ -228,10 +233,11 @@ export default function BuilderClient({ note, members, softwares }: {
                                         {/* Champ version Tablette — visible uniquement si "Tablette" est sélectionné */}
                                         {name === "Tablette" && (
                                             <div className="mb-4 space-y-2">
-                                                <label className="text-sm font-medium text-slate-700">
+                                                <label htmlFor={`tablet-version-${index}`} className="text-sm font-medium text-slate-700">
                                                     Numéro de version de la tablette
                                                 </label>
                                                 <Input
+                                                    id={`tablet-version-${index}`}
                                                     {...form.register(`sections.${index}.tabletVersion`)}
                                                     placeholder="ex : 2.4.1"
                                                     className="w-full"

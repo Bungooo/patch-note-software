@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useId, useState, useTransition } from "react"
+import { toast } from "sonner"
 import { addMember, deleteMember, updateMember } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trash2, UserPlus, User, Pencil, Check, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { fullName, type Member } from "@/lib/types"
-
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 // Composant pour une ligne de membre (vue normale + mode édition inline)
 function MemberRow({ m, onDelete, isPending }: {
@@ -22,16 +23,15 @@ function MemberRow({ m, onDelete, isPending }: {
     const [firstName, setFirstName] = useState(m.firstName)
     const [lastName, setLastName] = useState(m.lastName)
     const [role, setRole] = useState(m.role)
-    const [editError, setEditError] = useState<string | null>(null)
+    const id = useId()
 
     const getInitials = (f: string, l: string) => `${f[0] ?? ""}${l[0] ?? ""}`.toUpperCase()
 
     const handleSave = () => {
-        setEditError(null)
         startEditTransition(async () => {
             const result = await updateMember(m.id, firstName, lastName, role)
             if (result.error) {
-                setEditError(result.error)
+                toast.error(result.error)
             } else {
                 setEditing(false)
                 router.refresh()
@@ -43,7 +43,6 @@ function MemberRow({ m, onDelete, isPending }: {
         setFirstName(m.firstName)
         setLastName(m.lastName)
         setRole(m.role)
-        setEditError(null)
         setEditing(false)
     }
 
@@ -53,8 +52,9 @@ function MemberRow({ m, onDelete, isPending }: {
                 <div className="mb-6">
                     <div className="grid grid-cols-2 gap-3 mb-3">
                         <div className="space-y-1">
-                            <label className="text-xs font-medium text-muted-foreground">Prénom</label>
+                            <label htmlFor={`${id}-first`} className="text-xs font-medium text-muted-foreground">Prénom</label>
                             <Input
+                                id={`${id}-first`}
                                 value={firstName}
                                 onChange={e => setFirstName(e.target.value)}
                                 className="h-8 text-sm"
@@ -62,8 +62,9 @@ function MemberRow({ m, onDelete, isPending }: {
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-medium text-muted-foreground">Nom</label>
+                            <label htmlFor={`${id}-last`} className="text-xs font-medium text-muted-foreground">Nom</label>
                             <Input
+                                id={`${id}-last`}
                                 value={lastName}
                                 onChange={e => setLastName(e.target.value)}
                                 className="h-8 text-sm"
@@ -71,8 +72,9 @@ function MemberRow({ m, onDelete, isPending }: {
                         </div>
                     </div>
                     <div className="space-y-1 mb-3">
-                        <label className="text-xs font-medium text-muted-foreground">Poste</label>
+                        <label htmlFor={`${id}-role`} className="text-xs font-medium text-muted-foreground">Poste</label>
                         <Input
+                            id={`${id}-role`}
                             value={role}
                             onChange={e => setRole(e.target.value)}
                             className="h-8 text-sm"
@@ -80,7 +82,6 @@ function MemberRow({ m, onDelete, isPending }: {
                         />
                     </div>
                 </div>
-                {editError && <p className="text-xs text-red-500 mb-2">{editError}</p>}
                 <div className="flex gap-2 justify-end">
                     <Button
                         size="sm"
@@ -116,7 +117,7 @@ function MemberRow({ m, onDelete, isPending }: {
                 {m.role && <p className="text-xs text-muted-foreground truncate">{m.role}</p>}
             </div>
             {/* Actions */}
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                 <Button
                     variant="ghost"
                     size="icon"
@@ -127,16 +128,17 @@ function MemberRow({ m, onDelete, isPending }: {
                 >
                     <Pencil className="h-3.5 w-3.5" />
                 </Button>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
-                    onClick={() => onDelete(m)}
-                    disabled={isPending}
-                    title="Supprimer"
-                >
-                    <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <ConfirmDialog title={`Supprimer ${fullName(m)} ?`} onConfirm={() => onDelete(m)}>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+                        disabled={isPending}
+                        title="Supprimer"
+                    >
+                        <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                </ConfirmDialog>
             </div>
         </li>
     )
@@ -145,23 +147,20 @@ function MemberRow({ m, onDelete, isPending }: {
 export function MembersPanel({ members }: { members: Member[] }) {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
-    const [error, setError] = useState<string | null>(null)
 
     const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         const form = e.currentTarget // currentTarget n'est plus disponible après un await
         const data = new FormData(form)
-        setError(null)
         startTransition(async () => {
             const result = await addMember(String(data.get("firstName")), String(data.get("lastName")), String(data.get("role")))
-            if (result.error) return setError(result.error)
+            if (result.error) return void toast.error(result.error)
             form.reset()
             router.refresh()
         })
     }
 
     const handleDelete = (m: Member) => {
-        if (!confirm(`Supprimer ${fullName(m)} ?`)) return
         startTransition(async () => {
             await deleteMember(m.id)
             router.refresh()
@@ -182,19 +181,18 @@ export function MembersPanel({ members }: { members: Member[] }) {
                     <form onSubmit={handleAdd} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
-                                <label className="text-sm font-medium">Prénom</label>
-                                <Input name="firstName" required />
+                                <label htmlFor="new-member-first" className="text-sm font-medium">Prénom</label>
+                                <Input id="new-member-first" name="firstName" required />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-sm font-medium">Nom</label>
-                                <Input name="lastName" required />
+                                <label htmlFor="new-member-last" className="text-sm font-medium">Nom</label>
+                                <Input id="new-member-last" name="lastName" required />
                             </div>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium">Poste</label>
-                            <Input name="role" placeholder="ex : Développeur full-stack" required />
+                            <label htmlFor="new-member-role" className="text-sm font-medium">Poste</label>
+                            <Input id="new-member-role" name="role" placeholder="ex : Développeur full-stack" required />
                         </div>
-                        {error && <p className="text-sm text-red-500">{error}</p>}
                         <Button type="submit" disabled={isPending} className="w-full">
                             <UserPlus className="mr-2 h-4 w-4" />
                             {isPending ? "Ajout en cours…" : "Ajouter le membre"}

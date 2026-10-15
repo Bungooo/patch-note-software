@@ -2,32 +2,32 @@
 
 import { useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { ArrowDown, ArrowUp, Check, Package, Pencil, Plus, RotateCcw, Trash2, Upload, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DEFAULT_LOGO } from "@/lib/logos"
 import type { Software } from "@/lib/types"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { addSoftware, deleteSoftware, moveSoftware, renameSoftware, setSoftwareLogo } from "./actions"
 
 type Action = () => Promise<{ error?: string }>
 
-// Lance une action serveur, affiche son erreur éventuelle et recharge les données
+// Lance une action serveur, notifie son erreur éventuelle et recharge les données
 function useAction() {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
-    const [error, setError] = useState<string | null>(null)
 
     const run = (action: Action, onSuccess?: () => void) => {
-        setError(null)
         startTransition(async () => {
             const result = await action()
-            if (result.error) return setError(result.error)
+            if (result.error) return void toast.error(result.error)
             onSuccess?.()
             router.refresh()
         })
     }
-    return { run, isPending, error }
+    return { run, isPending }
 }
 
 const LOGO_LABELS = {
@@ -36,7 +36,7 @@ const LOGO_LABELS = {
 }
 
 function LogoSlot({ software, kind }: { software: Software; kind: "3d" | "plat" }) {
-    const { run, isPending, error } = useAction()
+    const { run, isPending } = useAction()
     const input = useRef<HTMLInputElement>(null)
     const logo = kind === "3d" ? software.logo3d : software.logoFlat
     const labels = LOGO_LABELS[kind]
@@ -84,7 +84,6 @@ function LogoSlot({ software, kind }: { software: Software; kind: "3d" | "plat" 
                     </div>
                 </div>
             </div>
-            {error && <p className="text-xs text-red-500">{error}</p>}
             <input
                 ref={input}
                 type="file"
@@ -100,7 +99,7 @@ function LogoSlot({ software, kind }: { software: Software; kind: "3d" | "plat" 
 }
 
 function SoftwareRow({ software, isFirst, isLast }: { software: Software; isFirst: boolean; isLast: boolean }) {
-    const { run, isPending, error } = useAction()
+    const { run, isPending } = useAction()
     const [editing, setEditing] = useState(false)
     const [name, setName] = useState(software.name)
 
@@ -114,7 +113,7 @@ function SoftwareRow({ software, isFirst, isLast }: { software: Software; isFirs
             <div className="flex items-center gap-2">
                 {editing ? (
                     <>
-                        <Input value={name} onChange={e => setName(e.target.value)} className="h-8 text-sm" autoFocus />
+                        <Input value={name} onChange={e => setName(e.target.value)} className="h-8 text-sm" aria-label="Nom du logiciel" autoFocus />
                         <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={cancel} disabled={isPending} title="Annuler">
                             <X className="h-3.5 w-3.5" />
                         </Button>
@@ -144,19 +143,19 @@ function SoftwareRow({ software, isFirst, isLast }: { software: Software; isFirs
                                 onClick={() => setEditing(true)}>
                                 <Pencil className="h-3.5 w-3.5" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50" disabled={isPending} title="Supprimer"
-                                onClick={() => {
-                                    if (confirm(`Supprimer ${software.name} ? Les notes existantes le garderont, avec le logo Ianord.`)) {
-                                        run(() => deleteSoftware(software.id))
-                                    }
-                                }}>
-                                <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                            <ConfirmDialog
+                                title={`Supprimer ${software.name} ?`}
+                                description="Les notes existantes le garderont, avec le logo Ianord."
+                                onConfirm={() => run(() => deleteSoftware(software.id))}
+                            >
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50" disabled={isPending} title="Supprimer">
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                            </ConfirmDialog>
                         </div>
                     </>
                 )}
             </div>
-            {error && <p className="text-xs text-red-500">{error}</p>}
             <div className="flex flex-col sm:flex-row gap-3">
                 <LogoSlot software={software} kind="plat" />
                 <LogoSlot software={software} kind="3d" />
@@ -166,7 +165,7 @@ function SoftwareRow({ software, isFirst, isLast }: { software: Software; isFirs
 }
 
 export function SoftwaresPanel({ softwares }: { softwares: Software[] }) {
-    const { run, isPending, error } = useAction()
+    const { run, isPending } = useAction()
     const [name, setName] = useState("")
 
     const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
@@ -185,12 +184,11 @@ export function SoftwaresPanel({ softwares }: { softwares: Software[] }) {
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleAdd} className="flex gap-2">
-                        <Input value={name} onChange={e => setName(e.target.value)} placeholder="ex : WebPlanning" required />
+                        <Input value={name} onChange={e => setName(e.target.value)} placeholder="ex : WebPlanning" aria-label="Nom du nouveau logiciel" required />
                         <Button type="submit" disabled={isPending}>
                             <Plus className="h-4 w-4" />Ajouter
                         </Button>
                     </form>
-                    {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
                     <p className="mt-3 text-xs text-muted-foreground">
                         Sans logo importé, le logo Ianord est utilisé. Seuls les logiciels avec un logo 3D apparaissent sur la page de garde du PDF.
                     </p>
