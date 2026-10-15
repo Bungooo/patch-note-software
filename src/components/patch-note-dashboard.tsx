@@ -4,7 +4,7 @@ import { useState, useMemo } from "react"
 import { PatchNoteCard } from "@/components/patch-note-card"
 import { PeriodFilter } from "@/components/period-filter"
 import type { PatchNote, Software } from "@/lib/types"
-import { formatDate } from "@/lib/utils"
+import { cn, formatDate, SELECTED_ITEM } from "@/lib/utils"
 import { DEFAULT_LOGO, softwareFinder } from "@/lib/logos"
 import { Input } from "@/components/ui/input"
 import {
@@ -24,9 +24,6 @@ import {
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus, ChevronDown, Settings } from "lucide-react"
-
-// Fond en plus de la coche : shadcn ne marque l'élément coché que par une petite coche
-const CHECKED = "mt-px data-[state=checked]:bg-blue-50 data-[state=checked]:text-blue-700 data-[state=checked]:font-medium data-[state=checked]:focus:bg-blue-100 data-[state=checked]:focus:text-blue-700"
 
 export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; softwares: Software[] }) {
     const [search, setSearch] = useState("")
@@ -124,7 +121,7 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="w-[240px]">
                                 <DropdownMenuCheckboxItem
-                                    className={CHECKED}
+                                    className={cn("mt-px", SELECTED_ITEM)}
                                     checked={selected.length === 0}
                                     onCheckedChange={() => { setSelected([]); setVisibleCount(10) }}
                                     onSelect={e => e.preventDefault()}
@@ -134,15 +131,16 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                                 <DropdownMenuSeparator />
                                 {allSoftwares.map(s => (
                                     <DropdownMenuCheckboxItem
-                                        className={CHECKED}
+                                        className={cn("mt-px", SELECTED_ITEM)}
                                         key={s.name}
                                         checked={selected.includes(s.name)}
                                         onCheckedChange={() => toggleSoftware(s.name)}
                                         // Garde le menu ouvert pour cocher plusieurs logiciels
                                         onSelect={e => e.preventDefault()}
                                     >
+                                        {/* Le logo Ianord, foncé, passe en blanc sur le fond de l'élément coché */}
                                         {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
-                                        <img src={s.logo ?? DEFAULT_LOGO} alt="" className="h-4 w-4 object-contain" />
+                                        <img src={s.logo ?? DEFAULT_LOGO} alt="" className={cn("h-4 w-4 object-contain", !s.logo && "in-data-[state=checked]:brightness-0 in-data-[state=checked]:invert")} />
                                         {s.name}
                                     </DropdownMenuCheckboxItem>
                                 ))}
@@ -157,9 +155,9 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                                 <SelectValue placeholder="Auteur" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Tous les auteurs</SelectItem>
+                                <SelectItem value="all" className={SELECTED_ITEM}>Tous les auteurs</SelectItem>
                                 {authors.map(a => (
-                                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                                    <SelectItem key={a} value={a} className={SELECTED_ITEM}>{a}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

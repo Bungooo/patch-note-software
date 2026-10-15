@@ -17,7 +17,7 @@ function label(value: string) {
     return `${monthName(value, "long")} ${value.slice(0, 4)}`
 }
 
-const plural = (n: number) => `${n} note${n > 1 ? "s" : ""}`
+const patchs = (n: number) => `${n} patch${n > 1 ? "s" : ""}`
 
 // Sélecteur de période : une grille de mois par année, avec le nombre de notes de chaque mois
 // value : "all", une année ("2026") ou un mois ("2026-10"), préfixe des dates AAAA-MM-JJ
@@ -57,7 +57,7 @@ export function PeriodFilter({ dates, value, onChange }: {
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
-                    className={cn("w-[220px] justify-between font-normal", value !== "all" && "border-blue-300 text-blue-700")}
+                    className="w-[220px] justify-between font-normal"
                     style={{ backgroundColor: "var(--token-surface-secondary)" }}
                 >
                     <span className="flex items-center gap-2 truncate">
@@ -67,7 +67,7 @@ export function PeriodFilter({ dates, value, onChange }: {
                     <ChevronDown className="h-4 w-4 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-[280px] p-3">
+            <PopoverContent align="end" className="w-[340px] p-3">
                 <div className="flex items-center justify-between mb-3">
                     <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Année précédente"
                         disabled={year <= minYear} onClick={() => setYear(y => y - 1)}>
@@ -86,25 +86,21 @@ export function PeriodFilter({ dates, value, onChange }: {
                         const count = counts.get(ym) ?? 0
                         const active = value === ym
                         return (
-                            <button
+                            <Button
                                 key={ym}
-                                type="button"
+                                variant={active ? "default" : "ghost"}
                                 disabled={count === 0}
                                 aria-pressed={active}
-                                aria-label={`${label(ym)}, ${plural(count)}`}
+                                aria-label={`${label(ym)}, ${patchs(count)}`}
                                 // Recliquer sur le mois choisi le désélectionne
                                 onClick={() => select(active ? "all" : ym)}
-                                className={cn(
-                                    "flex flex-col items-center rounded-md py-2 text-sm transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                                    active ? "bg-blue-600 text-white" : "hover:bg-blue-50",
-                                    count === 0 && "text-slate-300 cursor-not-allowed hover:bg-transparent",
-                                )}
+                                className="h-auto flex-col gap-0 py-2"
                             >
-                                <span className={cn(count > 0 && "font-medium")}>{monthName(ym, "short")}</span>
-                                <span className={cn("text-[11px]", active ? "text-blue-100" : "text-muted-foreground", count === 0 && "invisible")}>
-                                    {count}
+                                <span>{monthName(ym, "short")}</span>
+                                <span className={cn("text-[11px] font-normal", active ? "opacity-80" : "text-muted-foreground", count === 0 && "invisible")}>
+                                    {patchs(count)}
                                 </span>
-                            </button>
+                            </Button>
                         )
                     })}
                 </div>
@@ -112,12 +108,12 @@ export function PeriodFilter({ dates, value, onChange }: {
                 <div className="mt-3 pt-3 border-t flex items-center justify-between gap-2">
                     <Button
                         size="sm"
-                        variant="outline"
-                        className={cn("h-8 text-xs", value === String(year) && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700 hover:text-white")}
+                        variant={value === String(year) ? "default" : "outline"}
+                        className="h-8 text-xs"
                         disabled={!counts.get(String(year))}
                         onClick={() => select(String(year))}
                     >
-                        Toute l&apos;année {year} · {counts.get(String(year)) ?? 0}
+                        Toute l&apos;année {year} · {patchs(counts.get(String(year)) ?? 0)}
                     </Button>
                     {value !== "all" && (
                         <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => select("all")}>

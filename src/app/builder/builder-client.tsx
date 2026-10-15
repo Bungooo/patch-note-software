@@ -479,7 +479,7 @@ function ItemList({ form, name, label, color }: {
                     <Button variant="destructive" className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700" size="icon" onClick={() => remove(idx)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
             ))}
-            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 ml-4" onClick={() => append({ text: "" })}><Plus className="h-4 w-4" />Ajouter une ligne</Button>
+            <Button variant="ghost" size="sm" className="ml-4" onClick={() => append({ text: "" })}><Plus className="h-4 w-4" />Ajouter une ligne</Button>
         </div>
     )
 }
