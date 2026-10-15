@@ -4,6 +4,7 @@ import { useState, useMemo } from "react"
 import { PatchNoteCard } from "@/components/patch-note-card"
 import type { PatchNote, Software } from "@/lib/types"
 import { formatDate, parseLocalDate } from "@/lib/utils"
+import { DEFAULT_LOGO, softwareFinder } from "@/lib/logos"
 import { Input } from "@/components/ui/input"
 import {
     Select,
@@ -42,11 +43,20 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
         setVisibleCount(10)
     }
 
-    // Logiciels présents dans au moins une note
-    const allSoftwares = useMemo(
-        () => [...new Set(notes.flatMap(n => n.sections.map(s => s.name)).filter(Boolean))].sort(),
-        [notes]
-    )
+    // Logiciels présents dans au moins une note : ceux avec un logo importé d'abord,
+    // puis ceux au logo Ianord, chaque groupe dans l'ordre défini dans les paramètres
+    const allSoftwares = useMemo(() => {
+        const find = softwareFinder(softwares)
+        const names = [...new Set(notes.flatMap(n => n.sections.map(s => s.name)).filter(Boolean))]
+        return names
+            .map(name => {
+                const software = find(name)
+                // Logiciel supprimé depuis des paramètres : en dernier
+                const rank = software ? softwares.indexOf(software) : softwares.length
+                return { name, logo: software?.logoFlat?.url, rank }
+            })
+            .sort((a, b) => Number(!a.logo) - Number(!b.logo) || a.rank - b.rank || a.name.localeCompare(b.name))
+    }, [notes, softwares])
 
     const filteredNotes = useMemo(() => {
         const searchLower = search.toLowerCase()
@@ -81,13 +91,17 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                     <div className="flex flex-col gap-2 items-start">
                         <span className="text-sm font-medium">Logiciel</span>
                         <Select value={software} onValueChange={resetAndSet(setSoftware)}>
-                            <SelectTrigger className="w-[180px]" style={{ backgroundColor: "var(--token-surface-secondary)" }}>
+                            <SelectTrigger className="w-[240px]" style={{ backgroundColor: "var(--token-surface-secondary)" }}>
                                 <SelectValue placeholder="Logiciel" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Tous les logiciels</SelectItem>
                                 {allSoftwares.map(s => (
-                                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                                    <SelectItem key={s.name} value={s.name}>
+                                        {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
+                                        <img src={s.logo ?? DEFAULT_LOGO} alt="" className="h-4 w-4 object-contain" />
+                                        {s.name}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
