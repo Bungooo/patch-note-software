@@ -1,7 +1,8 @@
 import postgres from 'postgres'
 
-// Ta chaîne de connexion directe
-const connectionString = "postgresql://neondb_owner:npg_uNwg9ntBih5G@ep-calm-dew-aghguaey-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require"
+// Chaîne de connexion lue depuis .env.local (jamais commitée)
+const connectionString = process.env.DATABASE_URL
+if (!connectionString) throw new Error("DATABASE_URL manquant : ajoute-le dans .env.local")
 
 const sql = postgres(connectionString, {
     ssl: 'require',
