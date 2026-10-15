@@ -28,8 +28,8 @@ export function ConfirmDialog({ title, description, onConfirm, children }: {
                     {description && <AlertDialogDescription>{description}</AlertDialogDescription>}
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel tooltip="Fermer sans rien supprimer">Annuler</AlertDialogCancel>
-                    <AlertDialogAction variant="destructive" tooltip="Confirmer la suppression" onClick={onConfirm}>Supprimer</AlertDialogAction>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction variant="destructive" onClick={onConfirm}>Supprimer</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
