@@ -28,6 +28,23 @@ export default async function BuilderPage({
         }
     }
 
-    // 3. On envoie les données (ou null) au composant client
-    return <BuilderClient initialData={initialData} />
+    // 3. Récupération des membres depuis la DB (table créée à la volée si besoin)
+    let members: { id: number; firstName: string; lastName: string; role: string }[] = []
+    try {
+        await sql`
+            CREATE TABLE IF NOT EXISTS "Member" (
+                id SERIAL PRIMARY KEY,
+                "firstName" TEXT NOT NULL,
+                "lastName" TEXT NOT NULL,
+                "role" TEXT NOT NULL DEFAULT '',
+                "createdAt" TIMESTAMP DEFAULT NOW()
+            )
+        `
+        members = (await sql`SELECT * FROM "Member" ORDER BY "lastName" ASC`) as any
+    } catch (error) {
+        console.error("Erreur récupération membres:", error)
+    }
+
+    // 4. On envoie les données au composant client
+    return <BuilderClient initialData={initialData} members={members} />
 }

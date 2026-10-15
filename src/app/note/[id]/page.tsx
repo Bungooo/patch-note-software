@@ -21,7 +21,12 @@ function getLogoPath(softwareName: string) {
     if (name.includes('bo')) return '/logos-3d/bo.svg';
     if (name.includes('autre')) return '/logos-3d/Autre.svg';
     if (name.includes('socle admin')) return '/logos-3d/Socle Admin.svg';
-    if (name.includes('tablette')) return '/logos-3d/Tablette.svg';
+    if (name.includes('tablette')) return '/logos-3d/WebGerest.svg';
+    if (name.includes('Inscription – Famille')) return '/logos-3d/Inscription – Famille.svg';
+    if (name.includes('Acces hub')) return '/logos-3d/Acces hub.svg';
+    if (name.includes('webview')) return '/logos-3d/webgerest.svg';
+    if (name.includes('webstock')) return '/logos-3d/webstock.svg';
+    if (name.includes('webpatch')) return '/logos-3d/WebPatch.svg';
 
     return null;
 }
@@ -33,6 +38,7 @@ function getFlatLogoPath(softwareName: string) {
     if (name.includes('webresto')) return '/logos/WebResto.svg';
     if (name.includes('webhoraire')) return '/logos/WebHoraire.svg';
     if (name.includes('webgerest')) return '/logos/WebGerest.svg';
+    if (name.includes('webstock')) return '/logos/WebStock.svg';
     if (name.includes('tarrification') || name.includes('tarification')) return '/logos/Tarification – Famille.svg'; // Ou gestionnaire, à définir
     if (name.includes('inscription')) return '/logos/Inscription – Gestionnaire.svg';
     if (name.includes('réservation') || name.includes('reservation')) return '/logos/Réservation.svg';
@@ -41,7 +47,12 @@ function getFlatLogoPath(softwareName: string) {
     if (name.includes('bo')) return '/logos/BO.svg';
     if (name.includes('autre')) return '/logos/Autre.svg';
     if (name.includes('socle admin')) return '/logos/Socle Admin.svg';
-    if (name.includes('tablette')) return '/logos/Tablette.svg';
+    if (name.includes('tablette')) return '/logos/WebGerest.svg';
+    if (name.includes('Inscription – Famille')) return '/logos/Inscription – Famille.svg';
+    if (name.includes('Acces hub')) return '/logos/Acces hub.svg';
+    if (name.includes('webview')) return '/logos/webgerest.svg';
+    if (name.includes('webpatch')) return '/logos/webpatch.svg';
+
 
     return null;
 }
@@ -53,6 +64,8 @@ function getAuthorTitle(authorName: string) {
 
     if (name.includes('maufroid')) return 'Manager BACK';
     if (name.includes('guillaume')) return 'Manager FRONT';
+    if (name.includes('ouahabi')) return 'Développeur LEGACY';
+    if (name.includes('justin')) return 'Développeur FULLSTACK';
 
     return 'Manager développeur';
 }
@@ -74,8 +87,8 @@ export default async function PrintNotePage({ params }: { params: Promise<{ id: 
     const softwareLogos = sections
         .map((s: any) => ({ name: s.name, logo: getLogoPath(s.name) }))
         .filter((item: any) => item.logo !== null)
-        // PAGE DE GARDE : On ne veut que les logos des logiciels "Web..."
-        .filter((item: any) => item.name.toLowerCase().includes('web'))
+        // PAGE DE GARDE : On ne veut que les logos des logiciels "Web..." (sauf WebPatch)
+        .filter((item: any) => (item.name.toLowerCase().includes('web') || item.name.toLowerCase().includes('tablette')) && !item.name.toLowerCase().includes('webpatch'))
         // Dédoublonnage au cas où
         .filter((item: any, index: number, self: any[]) =>
             index === self.findIndex((t) => t.name === item.name)
@@ -146,6 +159,18 @@ export default async function PrintNotePage({ params }: { params: Promise<{ id: 
                                 ))}
                             </div>
                         )}
+
+                        {/* Numéro de version Tablette */}
+                        {(() => {
+                            const tabletSection = sections.find(
+                                (s: any) => s.name?.toLowerCase() === 'tablette' && s.tabletVersion
+                            );
+                            return tabletSection ? (
+                                <div className="mt-2 text-[20px] font-semibold text-slate-600">
+                                    Version {tabletSection.tabletVersion}
+                                </div>
+                            ) : null;
+                        })()}
                     </div>
                 </div>
 

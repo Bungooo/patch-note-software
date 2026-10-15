@@ -9,6 +9,7 @@ export const SoftwareSchema = z.object({
     name: z.string().min(1, "Nom requis"), // Utilise string ici pour plus de souplesse au début
     features: z.array(ItemSchema).default([]),
     fixes: z.array(ItemSchema).default([]),
+    tabletVersion: z.string().optional(), // Numéro de version, utilisé uniquement pour la Tablette
 });
 
 export const PatchNoteSchema = z.object({

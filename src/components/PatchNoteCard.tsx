@@ -23,6 +23,7 @@ const getLogoPath = (softwareName: string) => {
         "WebGerest": "/logos/WebGerest.svg",
         "WebHoraire": "/logos/WebHoraire.svg",
         "WebResto": "/logos/WebResto.svg",
+        "WebStock": "/logos/WebStock.svg",
         "Tarification – Famille": "/logos/Tarification – Famille.svg",
         "Tarification – Gestionnaire": "/logos/Tarification – Gestionnaire.svg",
         "Inscription – Gestionnaire": "/logos/Inscription – Gestionnaire.svg",
@@ -30,7 +31,8 @@ const getLogoPath = (softwareName: string) => {
         "BO": "/logos/BO.svg",
         "CFA": "/logos/CFA.svg",
         "Back": "/logos/Back.svg",
-        "Autre": "/logos/Autre.svg"
+        "Autre": "/logos/Autre.svg",
+        "Tablette": "/logos/WebGerest.svg"
     }
     // Match exact ou partiel si nécessaire (ici dictionnaire exact)
     return map[softwareName] || null
@@ -69,7 +71,7 @@ export function PatchNoteCard({ note }: { note: PatchNote }) {
                         const path = getLogoPath(name);
                         if (!path) return;
 
-                        if (name.toLowerCase().startsWith('web')) {
+                        if (name.toLowerCase().startsWith('web') || name.toLowerCase() === 'tablette') {
                             logosToDisplay.push({ name, path });
                         } else {
                             hasOther = true;

@@ -40,7 +40,9 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-export default function BuilderClient({ initialData }: { initialData?: any }) {
+type Member = { id: number; firstName: string; lastName: string; role: string }
+
+export default function BuilderClient({ initialData, members = [] }: { initialData?: any; members?: Member[] }) {
     const router = useRouter()
     const [showExitAlert, setShowExitAlert] = useState(false)
 
@@ -147,8 +149,25 @@ export default function BuilderClient({ initialData }: { initialData?: any }) {
                                                     <SelectValue placeholder="Sélectionner l'auteur" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="Guillaume DELEUZE">Guillaume DELEUZE</SelectItem>
-                                                    <SelectItem value="Guillaume MAUFROID">Guillaume MAUFROID</SelectItem>
+                                                    {members.length > 0 ? (
+                                                        members.map(m => {
+                                                            const fullName = `${m.firstName} ${m.lastName}`
+                                                            return (
+                                                                <SelectItem key={m.id} value={fullName}>
+                                                                    <span>{fullName}</span>
+                                                                    {m.role && <span className="ml-2 text-xs text-muted-foreground">{m.role}</span>}
+                                                                </SelectItem>
+                                                            )
+                                                        })
+                                                    ) : (
+                                                        // Fallback si aucun membre en DB
+                                                        <>
+                                                            <SelectItem value="Guillaume DELEUZE">Guillaume DELEUZE</SelectItem>
+                                                            <SelectItem value="Guillaume MAUFROID">Guillaume MAUFROID</SelectItem>
+                                                            <SelectItem value="Ibrahim OUAHABI">Ibrahim OUAHABI</SelectItem>
+                                                            <SelectItem value="Justin FONTAINE">Justin FONTAINE</SelectItem>
+                                                        </>
+                                                    )}
                                                 </SelectContent>
                                             </Select>
                                         )}
@@ -226,9 +245,11 @@ export default function BuilderClient({ initialData }: { initialData?: any }) {
                                                     <SelectItem value="WebGerest">WebGerest</SelectItem>
                                                     <SelectItem value="WebHoraire">WebHoraire</SelectItem>
                                                     <SelectItem value="WebResto">WebResto</SelectItem>
+                                                    <SelectItem value="WebStock">WebStock</SelectItem>
                                                     <SelectItem value="Tarification – Famille">Tarification – Famille</SelectItem>
                                                     <SelectItem value="Tarification – Gestionnaire">Tarification – Gestionnaire</SelectItem>
                                                     <SelectItem value="Inscription – Gestionnaire">Inscription – Gestionnaire</SelectItem>
+                                                    <SelectItem value="Inscription – Famille">Inscription – Famille</SelectItem>
                                                     <SelectItem value="Réservation">Réservation</SelectItem>
                                                     <SelectItem value="BO">BO</SelectItem>
                                                     <SelectItem value="CFA">CFA</SelectItem>
@@ -236,10 +257,26 @@ export default function BuilderClient({ initialData }: { initialData?: any }) {
                                                     <SelectItem value="Autre">Autre</SelectItem>
                                                     <SelectItem value="Socle Admin">Socle Admin</SelectItem>
                                                     <SelectItem value="Tablette">Tablette</SelectItem>
+                                                    <SelectItem value="Acces hub">Acces hub</SelectItem>
+                                                    <SelectItem value="Webview">Webview</SelectItem>
+                                                    <SelectItem value="WebPatch">WebPatch</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         )}
                                     />
+                                    {/* Champ version Tablette — visible uniquement si "Tablette" est sélectionné */}
+                                    {form.watch(`sections.${index}.name`) === "Tablette" && (
+                                        <div className="mb-4 space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">
+                                                Numéro de version de la tablette
+                                            </label>
+                                            <Input
+                                                {...form.register(`sections.${index}.tabletVersion`)}
+                                                placeholder="ex : 2.4.1"
+                                                className="w-full"
+                                            />
+                                        </div>
+                                    )}
                                     <ItemList nestName={`sections.${index}.features`} form={form} label="Nouveautés" color="text-green-600" />
                                     <Separator />
                                     <ItemList nestName={`sections.${index}.fixes`} form={form} label="Correctifs" color="text-orange-600" />

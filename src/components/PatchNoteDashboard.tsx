@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Plus } from "lucide-react"
+import { Plus, ChevronDown, Settings } from "lucide-react"
 
 const MONTHS = [
     { value: "0", label: "Janvier" },
@@ -33,6 +33,12 @@ export function PatchNoteDashboard({ notes }: { notes: PatchNote[] }) {
     const [search, setSearch] = useState("")
     const [software, setSoftware] = useState<string>("all")
     const [month, setMonth] = useState<string>("all")
+    const [visibleCount, setVisibleCount] = useState(10)
+
+    const resetAndSet = (setter: (v: string) => void) => (v: string) => {
+        setter(v)
+        setVisibleCount(10)
+    }
 
     // Extract unique software names from notes
     const allSoftwares = useMemo(() => {
@@ -97,7 +103,7 @@ export function PatchNoteDashboard({ notes }: { notes: PatchNote[] }) {
                         <Input
                             placeholder="Rechercher..."
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => { setSearch(e.target.value); setVisibleCount(10) }}
                             className="w-[200px]"
                             style={{ backgroundColor: "var(--token-surface-secondary)" }}
                         />
@@ -105,7 +111,7 @@ export function PatchNoteDashboard({ notes }: { notes: PatchNote[] }) {
 
                     <div className="flex flex-col gap-2 items-start">
                         <span className="text-sm font-medium">Logiciel</span>
-                        <Select value={software} onValueChange={setSoftware}>
+                        <Select value={software} onValueChange={resetAndSet(setSoftware)}>
                             <SelectTrigger className="w-[180px]" style={{ backgroundColor: "var(--token-surface-secondary)" }}>
                                 <SelectValue placeholder="Logiciel" />
                             </SelectTrigger>
@@ -120,7 +126,7 @@ export function PatchNoteDashboard({ notes }: { notes: PatchNote[] }) {
 
                     <div className="flex flex-col gap-2 items-start">
                         <span className="text-sm font-medium">Période</span>
-                        <Select value={month} onValueChange={setMonth}>
+                        <Select value={month} onValueChange={resetAndSet(setMonth)}>
                             <SelectTrigger className="w-[180px]" style={{ backgroundColor: "var(--token-surface-secondary)" }}>
                                 <SelectValue placeholder="Période" />
                             </SelectTrigger>
@@ -134,14 +140,21 @@ export function PatchNoteDashboard({ notes }: { notes: PatchNote[] }) {
                     </div>
                 </div>
 
-                {/* Create Button */}
-                <Link href="/builder">
-                    <Button><Plus className="h-4 w-4" />Créer une note</Button>
-                </Link>
+                {/* Boutons d'action */}
+                <div className="flex items-center gap-2">
+                    <Link href="/settings">
+                        <Button variant="ghost" size="icon" title="Paramètres">
+                            <Settings className="h-4 w-4" />
+                        </Button>
+                    </Link>
+                    <Link href="/builder">
+                        <Button><Plus className="h-4 w-4" />Créer une note</Button>
+                    </Link>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredNotes.map((note) => (
+                {filteredNotes.slice(0, visibleCount).map((note) => (
                     <PatchNoteCard key={note.id} note={note} />
                 ))}
                 {filteredNotes.length === 0 && (
@@ -150,6 +163,23 @@ export function PatchNoteDashboard({ notes }: { notes: PatchNote[] }) {
                     </p>
                 )}
             </div>
+
+            {/* Bouton Charger plus */}
+            {visibleCount < filteredNotes.length && (
+                <div className="flex flex-col items-center gap-2 mt-8">
+                    <p className="text-sm text-muted-foreground">
+                        {Math.min(visibleCount, filteredNotes.length)} / {filteredNotes.length} notes affichées
+                    </p>
+                    <Button
+                        variant="outline"
+                        className="px-8"
+                        onClick={() => setVisibleCount(prev => prev + 10)}
+                    >
+                        <ChevronDown className="h-4 w-4" />
+                        Charger plus
+                    </Button>
+                </div>
+            )}
         </div>
     )
 }
