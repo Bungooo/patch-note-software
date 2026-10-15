@@ -170,9 +170,10 @@ export function MembersPanel({ members }: { members: Member[] }) {
     }
 
     return (
-        <div>
+        // Deux colonnes : formulaire d'ajout à gauche (fixé au défilement), liste à droite
+        <div className="grid gap-6 items-start lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
             {/* Formulaire d'ajout */}
-            <Card className="mb-8">
+            <Card className="lg:sticky lg:top-6">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
                         <UserPlus className="h-4 w-4" />

@@ -175,8 +175,9 @@ export function SoftwaresPanel({ softwares }: { softwares: Software[] }) {
     }
 
     return (
-        <div>
-            <Card className="mb-8">
+        // Deux colonnes : formulaire d'ajout à gauche (fixé au défilement), liste à droite
+        <div className="grid gap-6 items-start lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+            <Card className="lg:sticky lg:top-6">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
                         <Plus className="h-4 w-4" />
