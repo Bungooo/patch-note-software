@@ -10,15 +10,14 @@ import { SoftwaresPanel } from "./softwares-panel"
 
 export function SettingsClient({ members, softwares }: { members: Member[]; softwares: Software[] }) {
     return (
-        <div className="py-10 max-w-2xl mx-auto">
-            <div className="flex items-center gap-4 mb-8">
-                <Button variant="ghost" size="icon" tooltip="Revenir à l'accueil" asChild>
-                    <Link href="/"><ArrowLeft className="h-4 w-4" /></Link>
-                </Button>
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Paramètres</h1>
-                    <p className="text-sm text-muted-foreground mt-1">Gérez l&apos;équipe et les logiciels</p>
-                </div>
+        <div className="py-10">
+            {/* -ml-3 : la flèche s'aligne sur le titre et le logo, malgré le padding du bouton */}
+            <Button variant="ghost" className="-ml-3 mb-6" tooltip="Revenir à l'accueil" asChild>
+                <Link href="/"><ArrowLeft className="h-4 w-4" />Retour</Link>
+            </Button>
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold tracking-tight">Paramètres</h1>
+                <p className="text-sm text-muted-foreground mt-1">Gérez l&apos;équipe et les logiciels</p>
             </div>
 
             <Tabs defaultValue="members">
