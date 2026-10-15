@@ -10,6 +10,7 @@ import {
     Select,
     SelectContent,
     SelectItem,
+    SelectSeparator,
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
@@ -27,26 +28,19 @@ import { Plus, ChevronDown, Settings } from "lucide-react"
 // Fond en plus de la coche : shadcn ne marque l'élément coché que par une petite coche
 const CHECKED = "mt-px data-[state=checked]:bg-blue-50 data-[state=checked]:text-blue-700 data-[state=checked]:font-medium data-[state=checked]:focus:bg-blue-100 data-[state=checked]:focus:text-blue-700"
 
-const MONTHS = [
-    { value: "0", label: "Janvier" },
-    { value: "1", label: "Février" },
-    { value: "2", label: "Mars" },
-    { value: "3", label: "Avril" },
-    { value: "4", label: "Mai" },
-    { value: "5", label: "Juin" },
-    { value: "6", label: "Juillet" },
-    { value: "7", label: "Août" },
-    { value: "8", label: "Septembre" },
-    { value: "9", label: "Octobre" },
-    { value: "10", label: "Novembre" },
-    { value: "11", label: "Décembre" },
-]
+// "2026-10" → "Octobre 2026"
+const monthLabel = (period: string) => {
+    const label = parseLocalDate(`${period}-01`).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+    return label.charAt(0).toUpperCase() + label.slice(1)
+}
 
 export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; softwares: Software[] }) {
     const [search, setSearch] = useState("")
     // Aucun logiciel coché = tous les logiciels
     const [selected, setSelected] = useState<string[]>([])
-    const [month, setMonth] = useState<string>("all")
+    const [author, setAuthor] = useState<string>("all")
+    // "all", une année ("2026") ou un mois ("2026-10") : préfixe de la date AAAA-MM-JJ
+    const [period, setPeriod] = useState<string>("all")
     const [visibleCount, setVisibleCount] = useState(10)
 
     const resetAndSet = (setter: (v: string) => void) => (v: string) => {
@@ -69,6 +63,15 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
             .sort((a, b) => Number(!a.logo) - Number(!b.logo) || a.rank - b.rank || a.name.localeCompare(b.name))
     }, [notes, softwares])
 
+    const authors = useMemo(() => [...new Set(notes.map(n => n.author))].sort((a, b) => a.localeCompare(b)), [notes])
+
+    // Années et mois présents dans les notes, du plus récent au plus ancien
+    const periods = useMemo(() => {
+        const months = [...new Set(notes.map(n => n.date.slice(0, 7)))].sort().reverse()
+        const years = [...new Set(months.map(m => m.slice(0, 4)))]
+        return years.map(year => ({ year, months: months.filter(m => m.startsWith(year)) }))
+    }, [notes])
+
     const toggleSoftware = (name: string) => {
         setSelected(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name])
         setVisibleCount(10)
@@ -81,18 +84,29 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                 note.intro.toLowerCase().includes(searchLower) ||
                 formatDate(note.date).includes(searchLower)) &&
             (selected.length === 0 || note.sections.some(s => selected.includes(s.name))) &&
-            (month === "all" || parseLocalDate(note.date).getMonth().toString() === month)
+            (author === "all" || note.author === author) &&
+            (period === "all" || note.date.startsWith(period))
         )
-    }, [notes, search, selected, month])
+    }, [notes, search, selected, author, period])
 
     return (
         <div className="py-10">
-            <h1 className="text-3xl font-bold tracking-tight">Patch Notes</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold tracking-tight">Patch Notes</h1>
+                {/* Boutons d'action */}
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" title="Paramètres" asChild>
+                        <Link href="/settings"><Settings className="h-4 w-4" /></Link>
+                    </Button>
+                    <Button asChild>
+                        <Link href="/builder"><Plus className="h-4 w-4" />Créer une note</Link>
+                    </Button>
+                </div>
+            </div>
 
-            {/* Actions */}
-            <div className="flex py-10 justify-between items-center">
-                {/* Filtres */}
-                <div className="flex items-end gap-4">
+            {/* Filtres */}
+            <div className="py-10">
+                <div className="flex flex-wrap items-end gap-4">
                     <div className="flex flex-col gap-2 items-start">
                         <span className="text-sm font-medium">Recherche</span>
                         <Input
@@ -150,30 +164,38 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                     </div>
 
                     <div className="flex flex-col gap-2 items-start">
+                        <span className="text-sm font-medium">Auteur</span>
+                        <Select value={author} onValueChange={resetAndSet(setAuthor)}>
+                            <SelectTrigger className="w-[200px]" style={{ backgroundColor: "var(--token-surface-secondary)" }}>
+                                <SelectValue placeholder="Auteur" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tous les auteurs</SelectItem>
+                                {authors.map(a => (
+                                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex flex-col gap-2 items-start">
                         <span className="text-sm font-medium">Période</span>
-                        <Select value={month} onValueChange={resetAndSet(setMonth)}>
+                        <Select value={period} onValueChange={resetAndSet(setPeriod)}>
                             <SelectTrigger className="w-[180px]" style={{ backgroundColor: "var(--token-surface-secondary)" }}>
                                 <SelectValue placeholder="Période" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Toute l&apos;année</SelectItem>
-                                {MONTHS.map(m => (
-                                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                                ))}
+                                <SelectItem value="all">Toutes les périodes</SelectItem>
+                                {periods.map(({ year, months }) => [
+                                    <SelectSeparator key={`sep-${year}`} />,
+                                    <SelectItem key={year} value={year} className="font-medium">Toute l&apos;année {year}</SelectItem>,
+                                    ...months.map(m => <SelectItem key={m} value={m}>{monthLabel(m)}</SelectItem>),
+                                ])}
                             </SelectContent>
                         </Select>
                     </div>
                 </div>
 
-                {/* Boutons d'action */}
-                <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" title="Paramètres" asChild>
-                        <Link href="/settings"><Settings className="h-4 w-4" /></Link>
-                    </Button>
-                    <Button asChild>
-                        <Link href="/builder"><Plus className="h-4 w-4" />Créer une note</Link>
-                    </Button>
-                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
