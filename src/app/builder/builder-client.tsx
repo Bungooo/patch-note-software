@@ -373,7 +373,7 @@ export default function BuilderClient({ note, members, softwares }: {
                                             <AccordionContent className="pt-2 px-1 space-y-6">
                                                 {/* Champ version Tablette — visible uniquement si "Tablette" est sélectionné */}
                                                 {name === "Tablette" && (
-                                                    <div className="space-y-2">
+                                                    <div className="space-y-2 flex flex-col">
                                                         <label htmlFor={`tablet-version-${index}`} className="text-sm font-medium text-slate-700">
                                                             Numéro de version de la tablette
                                                         </label>
@@ -381,7 +381,7 @@ export default function BuilderClient({ note, members, softwares }: {
                                                             id={`tablet-version-${index}`}
                                                             {...form.register(`sections.${index}.tabletVersion`)}
                                                             placeholder="ex : 2.4.1"
-                                                            className="h-10 py-2"
+                                                            className="w-full"
                                                         />
                                                     </div>
                                                 )}
