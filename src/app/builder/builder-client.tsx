@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Controller, useFieldArray, useForm, useWatch, type UseFormReturn } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { ArrowLeft, Calendar as CalendarIcon, Plus, PlusCircle, Save, Trash2 } from "lucide-react"
+import { ArrowLeft, Calendar as CalendarIcon, Check, Plus, PlusCircle, Save, Trash2 } from "lucide-react"
 import { PatchNoteSchema, type PatchNoteValues } from "@/lib/schema"
 import { fullName, type Member, type PatchNote, type Software } from "@/lib/types"
 import { cn, parseLocalDate } from "@/lib/utils"
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -39,7 +39,16 @@ import {
 const withCurrent = (options: string[], current?: string) =>
     current && !options.includes(current) ? [...options, current] : options
 
-const emptySection = { name: "", features: [], fixes: [] }
+const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`
+
+function StepTitle({ step, children }: { step: number; children: React.ReactNode }) {
+    return (
+        <CardTitle className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{step}</span>
+            {children}
+        </CardTitle>
+    )
+}
 
 // Traduit une erreur de validation en action à faire, en nommant le logiciel concerné
 function describeIssue(path: PropertyKey[], sections: PatchNoteValues["sections"]) {
@@ -51,7 +60,7 @@ function describeIssue(path: PropertyKey[], sections: PatchNoteValues["sections"
     const software = sections[i]?.name || `Logiciel n°${i + 1}`
     if (list === "features") return `${software} : remplir ou supprimer la nouveauté n°${Number(j) + 1}`
     if (list === "fixes") return `${software} : remplir ou supprimer le correctif n°${Number(j) + 1}`
-    return `${software} : sélectionner le logiciel`
+    return `${software} : à compléter`
 }
 
 export default function BuilderClient({ note, members, softwares }: {
@@ -68,7 +77,7 @@ export default function BuilderClient({ note, members, softwares }: {
             date: new Date().toLocaleDateString("en-CA"), // format YYYY-MM-DD en heure locale
             intro: "",
             author: "",
-            sections: [emptySection],
+            sections: [],
         },
     })
 
@@ -107,6 +116,8 @@ export default function BuilderClient({ note, members, softwares }: {
     )]
     const authorOptions = withCurrent(members.map(fullName), note?.author)
     const softwareNames = softwares.map(s => s.name)
+    // Logiciels proposés, plus ceux d'une ancienne note supprimés depuis des paramètres
+    const softwareOptions = [...softwareNames, ...sections.map(s => s.name).filter(n => n && !softwareNames.includes(n))]
     const findSoftware = softwareFinder(softwares)
 
     const saveButton = (size?: "lg") => {
@@ -133,7 +144,7 @@ export default function BuilderClient({ note, members, softwares }: {
     }
 
     return (
-        <div className="py-10 pb-60">
+        <div className="mx-auto max-w-3xl py-10 pb-60">
             <div className="flex justify-between items-center mb-8">
                 <Button variant="ghost" onClick={handleBack}><ArrowLeft className="h-4 w-4" />Retour</Button>
                 <div className="flex items-center gap-2">
@@ -152,155 +163,180 @@ export default function BuilderClient({ note, members, softwares }: {
                 {note ? "Modifier la note" : "Nouvelle note"}
             </h1>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Colonne de gauche : Informations générales */}
-                <div className="space-y-4">
-                    <Card>
-                        <CardHeader><CardTitle>Informations Générales</CardTitle></CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2 flex flex-col">
-                                    <label htmlFor="author" className="text-sm font-medium">Auteur</label>
-                                    <Controller
-                                        control={form.control}
-                                        name="author"
-                                        render={({ field }) => (
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <SelectTrigger id="author" className="w-full">
-                                                    <SelectValue placeholder="Sélectionner l'auteur" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {authorOptions.map(name => {
-                                                        const role = members.find(m => fullName(m) === name)?.role
-                                                        return (
-                                                            <SelectItem key={name} value={name}>
-                                                                <span>{name}</span>
-                                                                {role && <span className="ml-2 text-xs text-muted-foreground">{role}</span>}
-                                                            </SelectItem>
-                                                        )
-                                                    })}
-                                                </SelectContent>
-                                            </Select>
-                                        )}
-                                    />
-                                    {members.length === 0 && (
-                                        <p className="text-xs text-muted-foreground">Ajoutez des collaborateurs dans les paramètres.</p>
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader><StepTitle step={1}>Informations</StepTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2 flex flex-col">
+                                <label htmlFor="author" className="text-sm font-medium">Auteur</label>
+                                <Controller
+                                    control={form.control}
+                                    name="author"
+                                    render={({ field }) => (
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <SelectTrigger id="author" className="w-full">
+                                                <SelectValue placeholder="Sélectionner l'auteur" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {authorOptions.map(name => {
+                                                    const role = members.find(m => fullName(m) === name)?.role
+                                                    return (
+                                                        <SelectItem key={name} value={name}>
+                                                            <span>{name}</span>
+                                                            {role && <span className="ml-2 text-xs text-muted-foreground">{role}</span>}
+                                                        </SelectItem>
+                                                    )
+                                                })}
+                                            </SelectContent>
+                                        </Select>
                                     )}
-                                </div>
-                                <div className="space-y-2 flex flex-col">
-                                    <label htmlFor="date" className="text-sm font-medium">Date de MEP</label>
-                                    <Controller
-                                        control={form.control}
-                                        name="date"
-                                        render={({ field }) => (
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        id="date"
-                                                        variant="outline"
-                                                        className={cn(
-                                                            "w-full justify-start text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                    >
-                                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {field.value
-                                                            ? format(parseLocalDate(field.value), "PPP", { locale: fr })
-                                                            : <span>Choisir une date</span>}
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={field.value ? parseLocalDate(field.value) : undefined}
-                                                        onSelect={(date) => date && field.onChange(format(date, "yyyy-MM-dd"))}
-                                                        autoFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                        )}
-                                    />
-                                </div>
+                                />
+                                {members.length === 0 && (
+                                    <p className="text-xs text-muted-foreground">Ajoutez des collaborateurs dans les paramètres.</p>
+                                )}
                             </div>
                             <div className="space-y-2 flex flex-col">
-                                <label htmlFor="intro" className="text-sm font-medium">Introduction</label>
-                                <Textarea id="intro" {...form.register("intro")} className="min-h-[100px]" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Colonne de droite : Logiciels impactés */}
-                <div className="space-y-4">
-                    <Accordion
-                        type="multiple"
-                        className="w-full space-y-4"
-                        value={fields.map(f => f.id).filter(id => !closedSections.includes(id))}
-                        onValueChange={open => setClosedSections(fields.map(f => f.id).filter(id => !open.includes(id)))}
-                    >
-                        {fields.map((field, index) => {
-                            const name = sections?.[index]?.name
-                            return (
-                                <AccordionItem key={field.id} value={field.id} className="border rounded-lg bg-white px-4">
-                                    <AccordionTrigger className="hover:no-underline py-4 font-bold">
-                                        {name || <span className="text-muted-foreground italic font-normal">Nouveau logiciel (à sélectionner)</span>}
-                                    </AccordionTrigger>
-                                    <AccordionContent className="pt-4 space-y-6">
-                                        <Controller
-                                            control={form.control}
-                                            name={`sections.${index}.name`}
-                                            render={({ field }) => (
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <SelectTrigger className="mb-4 w-full">
-                                                        <SelectValue placeholder="Sélectionner le logiciel impacté" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {withCurrent(softwareNames, field.value).map(s => (
-                                                            <SelectItem key={s} value={s}>
-                                                                {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
-                                                                <img src={findSoftware(s)?.logoFlat?.url ?? DEFAULT_LOGO} alt="" className="h-4 w-4 object-contain" />
-                                                                {s}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
-                                        />
-                                        {/* Champ version Tablette — visible uniquement si "Tablette" est sélectionné */}
-                                        {name === "Tablette" && (
-                                            <div className="mb-4 space-y-2">
-                                                <label htmlFor={`tablet-version-${index}`} className="text-sm font-medium text-slate-700">
-                                                    Numéro de version de la tablette
-                                                </label>
-                                                <Input
-                                                    id={`tablet-version-${index}`}
-                                                    {...form.register(`sections.${index}.tabletVersion`)}
-                                                    placeholder="ex : 2.4.1"
-                                                    className="w-full"
+                                <label htmlFor="date" className="text-sm font-medium">Date de MEP</label>
+                                <Controller
+                                    control={form.control}
+                                    name="date"
+                                    render={({ field }) => (
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    id="date"
+                                                    variant="outline"
+                                                    className={cn(
+                                                        "w-full justify-start text-left font-normal",
+                                                        !field.value && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {field.value
+                                                        ? format(parseLocalDate(field.value), "PPP", { locale: fr })
+                                                        : <span>Choisir une date</span>}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value ? parseLocalDate(field.value) : undefined}
+                                                    onSelect={(date) => date && field.onChange(format(date, "yyyy-MM-dd"))}
+                                                    autoFocus
                                                 />
-                                            </div>
-                                        )}
-                                        <ItemList form={form} name={`sections.${index}.features`} label="Nouveautés" color="text-green-600" />
-                                        <Separator />
-                                        <ItemList form={form} name={`sections.${index}.fixes`} label="Correctifs" color="text-orange-600" />
-                                        <Button variant="destructive" size="lg" className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 mt-4 w-full" onClick={() => remove(index)}>
-                                            <Trash2 className="mr-2 h-4 w-4" /> Supprimer ce logiciel
-                                        </Button>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            )
-                        })}
-                    </Accordion>
+                                            </PopoverContent>
+                                        </Popover>
+                                    )}
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2 flex flex-col">
+                            <label htmlFor="intro" className="text-sm font-medium">Introduction</label>
+                            <Textarea id="intro" {...form.register("intro")} className="min-h-[100px]" />
+                        </div>
+                    </CardContent>
+                </Card>
 
-                    <Button
-                        variant="outline"
-                        className="w-full py-8 border-dashed border-2 flex flex-col gap-2 h-auto text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5"
-                        onClick={() => append(emptySection)}
-                    >
-                        <PlusCircle className="h-6 w-6" />
-                        <span className="font-semibold">Ajouter un logiciel impacté</span>
-                    </Button>
-                </div>
+                <Card>
+                    <CardHeader>
+                        <StepTitle step={2}>Logiciels concernés</StepTitle>
+                        <CardDescription>Cliquez sur les logiciels touchés par cette mise à jour.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {softwareOptions.map(name => {
+                            const index = sections.findIndex(s => s.name === name)
+                            const section = sections[index]
+                            const lines = section ? section.features.length + section.fixes.length : 0
+                            const tile = (
+                                <button
+                                    type="button"
+                                    aria-pressed={index !== -1}
+                                    // Avec du contenu, le clic ouvre la confirmation (ConfirmDialog) au lieu de retirer directement
+                                    onClick={lines ? undefined : () => (index === -1 ? append({ name, features: [], fixes: [] }) : remove(index))}
+                                    className={cn(
+                                        "flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
+                                        index !== -1 ? "border-primary bg-primary/5 font-medium" : "hover:bg-slate-50"
+                                    )}
+                                >
+                                    {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
+                                    <img src={findSoftware(name)?.logoFlat?.url ?? DEFAULT_LOGO} alt="" className="h-5 w-5 object-contain" />
+                                    <span className="flex-1 truncate">{name}</span>
+                                    {index !== -1 && <Check className="h-4 w-4 text-primary" />}
+                                </button>
+                            )
+                            return lines ? (
+                                <ConfirmDialog
+                                    key={name}
+                                    title={`Retirer ${name} ?`}
+                                    description={`Ses ${lines} ligne${lines > 1 ? "s" : ""} (nouveautés et correctifs) seront supprimées.`}
+                                    onConfirm={() => remove(index)}
+                                >
+                                    {tile}
+                                </ConfirmDialog>
+                            ) : <Fragment key={name}>{tile}</Fragment>
+                        })}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <StepTitle step={3}>Contenu</StepTitle>
+                        <CardDescription>
+                            Astuce : collez une liste (Notion, Word…) dans un champ, chaque ligne devient une entrée. Le gras est conservé.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {fields.length === 0 ? (
+                            <p className="py-6 text-center text-sm text-muted-foreground">Sélectionnez au moins un logiciel à l&apos;étape 2.</p>
+                        ) : (
+                            <Accordion
+                                type="multiple"
+                                className="w-full space-y-3"
+                                value={fields.map(f => f.id).filter(id => !closedSections.includes(id))}
+                                onValueChange={open => setClosedSections(fields.map(f => f.id).filter(id => !open.includes(id)))}
+                            >
+                                {fields.map((field, index) => {
+                                    const section = sections[index]
+                                    const name = section?.name ?? ""
+                                    return (
+                                        <AccordionItem key={field.id} value={field.id} className="border rounded-lg px-4">
+                                            <AccordionTrigger className="hover:no-underline py-4">
+                                                <span className="flex flex-1 items-center gap-2">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
+                                                    <img src={findSoftware(name)?.logoFlat?.url ?? DEFAULT_LOGO} alt="" className="h-5 w-5 object-contain" />
+                                                    <span className="font-bold">{name}</span>
+                                                    <span className="ml-auto mr-2 text-xs font-normal text-muted-foreground">
+                                                        {plural(section?.features.length ?? 0, "nouveauté")} · {plural(section?.fixes.length ?? 0, "correctif")}
+                                                    </span>
+                                                </span>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="pt-2 space-y-6">
+                                                {/* Champ version Tablette — visible uniquement si "Tablette" est sélectionné */}
+                                                {name === "Tablette" && (
+                                                    <div className="space-y-2">
+                                                        <label htmlFor={`tablet-version-${index}`} className="text-sm font-medium text-slate-700">
+                                                            Numéro de version de la tablette
+                                                        </label>
+                                                        <Input
+                                                            id={`tablet-version-${index}`}
+                                                            {...form.register(`sections.${index}.tabletVersion`)}
+                                                            placeholder="ex : 2.4.1"
+                                                            className="w-full"
+                                                        />
+                                                    </div>
+                                                )}
+                                                <ItemList form={form} name={`sections.${index}.features`} label="Nouveautés" color="text-green-600" />
+                                                <Separator />
+                                                <ItemList form={form} name={`sections.${index}.fixes`} label="Correctifs" color="text-orange-600" />
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    )
+                                })}
+                            </Accordion>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
 
             <div className="flex justify-end pt-4 mt-8">{saveButton("lg")}</div>
