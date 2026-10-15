@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { ArrowLeft, Calendar as CalendarIcon, Check, Plus, PlusCircle, Save, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowLeft, ArrowUp, Calendar as CalendarIcon, Check, Plus, PlusCircle, Save, Trash2 } from "lucide-react"
 import { PatchNoteSchema, type PatchNoteValues } from "@/lib/schema"
 import { fullName, type Member, type PatchNote, type Software } from "@/lib/types"
 import { cn, parseLocalDate } from "@/lib/utils"
@@ -81,7 +81,7 @@ export default function BuilderClient({ note, members, softwares }: {
         },
     })
 
-    const { fields, append, remove } = useFieldArray({ control: form.control, name: "sections" })
+    const { fields, append, remove, move } = useFieldArray({ control: form.control, name: "sections" })
     // On mémorise les sections fermées : toutes sont ouvertes par défaut, y compris celles ajoutées ensuite
     const [closedSections, setClosedSections] = useState<string[]>([])
 
@@ -283,6 +283,7 @@ export default function BuilderClient({ note, members, softwares }: {
                     <CardHeader>
                         <StepTitle step={3}>Contenu</StepTitle>
                         <CardDescription>
+                            Les flèches ↑↓ règlent l&apos;ordre des logiciels dans le PDF.
                             Astuce : collez une liste (Notion, Word…) dans un champ, chaque ligne devient une entrée. Le gras est conservé.
                         </CardDescription>
                     </CardHeader>
@@ -301,16 +302,27 @@ export default function BuilderClient({ note, members, softwares }: {
                                     const name = section?.name ?? ""
                                     return (
                                         <AccordionItem key={field.id} value={field.id} className="border rounded-lg px-4">
-                                            <AccordionTrigger className="hover:no-underline py-4">
-                                                <span className="flex flex-1 items-center gap-2">
-                                                    {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
-                                                    <img src={findSoftware(name)?.logoFlat?.url ?? DEFAULT_LOGO} alt="" className="h-5 w-5 object-contain" />
-                                                    <span className="font-bold">{name}</span>
-                                                    <span className="ml-auto mr-2 text-xs font-normal text-muted-foreground">
-                                                        {plural(section?.features.length ?? 0, "nouveauté")} · {plural(section?.fixes.length ?? 0, "correctif")}
+                                            <div className="flex items-center gap-1 [&>h3]:flex-1">
+                                                <AccordionTrigger className="hover:no-underline py-4">
+                                                    <span className="flex flex-1 items-center gap-2">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
+                                                        <img src={findSoftware(name)?.logoFlat?.url ?? DEFAULT_LOGO} alt="" className="h-5 w-5 object-contain" />
+                                                        <span className="font-bold">{name}</span>
+                                                        <span className="ml-auto mr-2 text-xs font-normal text-muted-foreground">
+                                                            {plural(section?.features.length ?? 0, "nouveauté")} · {plural(section?.fixes.length ?? 0, "correctif")}
+                                                        </span>
                                                     </span>
-                                                </span>
-                                            </AccordionTrigger>
+                                                </AccordionTrigger>
+                                                {/* L'ordre des blocs est celui du PDF */}
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" title="Monter" aria-label={`Monter ${name}`}
+                                                    disabled={index === 0} onClick={() => move(index, index - 1)}>
+                                                    <ArrowUp className="h-3.5 w-3.5" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" title="Descendre" aria-label={`Descendre ${name}`}
+                                                    disabled={index === fields.length - 1} onClick={() => move(index, index + 1)}>
+                                                    <ArrowDown className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </div>
                                             <AccordionContent className="pt-2 space-y-6">
                                                 {/* Champ version Tablette — visible uniquement si "Tablette" est sélectionné */}
                                                 {name === "Tablette" && (
