@@ -80,10 +80,10 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                 <h1 className="text-3xl font-bold tracking-tight">Patch Notes</h1>
                 {/* Boutons d'action */}
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" title="Paramètres" asChild>
+                    <Button variant="ghost" size="icon" tooltip="Paramètres : équipe et logiciels" asChild>
                         <Link href="/settings"><Settings className="h-4 w-4" /></Link>
                     </Button>
-                    <Button asChild>
+                    <Button tooltip="Créer une nouvelle patch note" asChild>
                         <Link href="/builder"><Plus className="h-4 w-4" />Créer une note</Link>
                     </Button>
                 </div>
@@ -203,6 +203,7 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                     <Button
                         variant="outline"
                         className="px-8"
+                        tooltip="Afficher 10 notes de plus"
                         onClick={() => setVisibleCount(prev => prev + 10)}
                     >
                         <ChevronDown className="h-4 w-4" />

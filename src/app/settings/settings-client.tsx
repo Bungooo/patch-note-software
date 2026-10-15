@@ -12,7 +12,7 @@ export function SettingsClient({ members, softwares }: { members: Member[]; soft
     return (
         <div className="py-10 max-w-2xl mx-auto">
             <div className="flex items-center gap-4 mb-8">
-                <Button variant="ghost" size="icon" asChild>
+                <Button variant="ghost" size="icon" tooltip="Revenir à l'accueil" asChild>
                     <Link href="/"><ArrowLeft className="h-4 w-4" /></Link>
                 </Button>
                 <div>

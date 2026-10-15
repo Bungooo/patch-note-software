@@ -71,12 +71,12 @@ export function PeriodFilter({ dates, value, onChange }: {
                 </PopoverTrigger>
                 <PopoverContent align="end" className="w-[340px] p-3">
                     <div className="flex items-center justify-between mb-3">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Année précédente"
+                        <Button variant="ghost" size="icon" className="h-7 w-7" tooltip="Année précédente"
                             disabled={year <= minYear} onClick={() => setYear(y => y - 1)}>
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <span className="text-sm font-semibold">{year}</span>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Année suivante"
+                        <Button variant="ghost" size="icon" className="h-7 w-7" tooltip="Année suivante"
                             disabled={year >= maxYear} onClick={() => setYear(y => y + 1)}>
                             <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -116,13 +116,14 @@ export function PeriodFilter({ dates, value, onChange }: {
                             variant="outline"
                             className={cn("h-8 text-xs", value === String(year) && cn(SELECTED, "border-transparent"))}
                             disabled={!counts.get(String(year))}
+                            tooltip={`Afficher toutes les notes de ${year}`}
                             onClick={() => select(String(year))}
                         >
                             {value === String(year) && <Check className="h-3.5 w-3.5" />}
                             Toute l&apos;année {year} · {patchs(counts.get(String(year)) ?? 0)}
                         </Button>
                         {value !== "all" && (
-                            <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => select("all")}>
+                            <Button size="sm" variant="ghost" className="h-8 text-xs" tooltip="Afficher toutes les périodes" onClick={() => select("all")}>
                                 Réinitialiser
                             </Button>
                         )}

@@ -21,12 +21,12 @@ export function PatchNoteCard({ note, softwares }: { note: PatchNote; softwares:
                         <p className="text-sm text-muted-foreground">Par {note.author}</p>
                     </div>
                     <div className="flex gap-1 -mr-2 -mt-1">
-                        <Button variant="ghost" size="icon" className="h-10 w-10" title="Éditer" asChild>
+                        <Button variant="ghost" size="icon" className="h-10 w-10" tooltip="Éditer la note" asChild>
                             <Link href={`/builder?id=${note.id}`} aria-label={`Éditer la note du ${formatDate(note.date)}`}>
                                 <Pencil className="size-5" />
                             </Link>
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-10 w-10" title="Imprimer" asChild>
+                        <Button variant="ghost" size="icon" className="h-10 w-10" tooltip="Imprimer la note" asChild>
                             <Link href={`/note/${note.id}`} aria-label={`Imprimer la note du ${formatDate(note.date)}`}>
                                 <Printer className="size-5" />
                             </Link>

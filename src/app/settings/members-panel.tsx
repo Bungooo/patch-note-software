@@ -88,6 +88,7 @@ function MemberRow({ m, onDelete, isPending }: {
                         variant="outline"
                         onClick={handleCancel}
                         disabled={editPending}
+                        tooltip="Annuler les modifications"
                     >
                         <X className="h-3.5 w-3.5" />
                         Annuler
@@ -96,6 +97,7 @@ function MemberRow({ m, onDelete, isPending }: {
                         size="sm"
                         onClick={handleSave}
                         disabled={editPending}
+                        tooltip="Enregistrer les modifications du membre"
                     >
                         <Check className="h-3.5 w-3.5" />
                         {editPending ? "Sauvegarde…" : "Sauvegarder"}
@@ -124,7 +126,7 @@ function MemberRow({ m, onDelete, isPending }: {
                     className="h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-100"
                     onClick={() => setEditing(true)}
                     disabled={isPending}
-                    title="Modifier"
+                    tooltip="Modifier le membre"
                 >
                     <Pencil className="h-3.5 w-3.5" />
                 </Button>
@@ -134,7 +136,7 @@ function MemberRow({ m, onDelete, isPending }: {
                         size="icon"
                         className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
                         disabled={isPending}
-                        title="Supprimer"
+                        tooltip="Supprimer le membre"
                     >
                         <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -193,7 +195,7 @@ export function MembersPanel({ members }: { members: Member[] }) {
                             <label htmlFor="new-member-role" className="text-sm font-medium">Poste</label>
                             <Input id="new-member-role" name="role" placeholder="ex : Développeur full-stack" required />
                         </div>
-                        <Button type="submit" disabled={isPending} className="w-full">
+                        <Button type="submit" disabled={isPending} className="w-full" tooltip="Ajouter ce membre à l'équipe">
                             <UserPlus className="mr-2 h-4 w-4" />
                             {isPending ? "Ajout en cours…" : "Ajouter le membre"}
                         </Button>

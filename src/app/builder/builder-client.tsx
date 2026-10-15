@@ -126,7 +126,8 @@ export default function BuilderClient({ note, members, softwares }: {
 
     const saveButton = (size?: "lg") => {
         const button = (
-            <Button onClick={form.handleSubmit(onSubmit)} size={size} disabled={todo.length > 0 || isSubmitting}>
+            <Button onClick={form.handleSubmit(onSubmit)} size={size} disabled={todo.length > 0 || isSubmitting}
+                tooltip={todo.length === 0 ? "Enregistrer la note" : undefined}>
                 <Save className="h-4 w-4" />Enregistrer
             </Button>
         )
@@ -150,11 +151,11 @@ export default function BuilderClient({ note, members, softwares }: {
     return (
         <div className="mx-auto max-w-3xl py-10 pb-60">
             <div className="flex justify-between items-center mb-8">
-                <Button variant="ghost" onClick={handleBack}><ArrowLeft className="h-4 w-4" />Retour</Button>
+                <Button variant="ghost" tooltip="Revenir à l'accueil" onClick={handleBack}><ArrowLeft className="h-4 w-4" />Retour</Button>
                 <div className="flex items-center gap-2">
                     {note && (
                         <ConfirmDialog title="Supprimer cette note ?" description="Cette action est définitive." onConfirm={onDelete}>
-                            <Button variant="destructive">
+                            <Button variant="destructive" tooltip="Supprimer définitivement cette note">
                                 <Trash2 className="h-4 w-4" />
                                 Supprimer la note
                             </Button>
@@ -334,21 +335,25 @@ export default function BuilderClient({ note, members, softwares }: {
                                                 />
                                             )}
                                             <div className="flex items-center gap-1 [&>h3]:flex-1">
-                                                <span
-                                                    draggable
-                                                    title="Glisser pour déplacer"
-                                                    className="-ml-2 cursor-grab p-1 text-muted-foreground active:cursor-grabbing"
-                                                    onDragStart={e => {
-                                                        setDragFrom(index)
-                                                        e.dataTransfer.effectAllowed = "move"
-                                                        // On fait glisser tout le bloc, pas seulement la poignée
-                                                        const item = e.currentTarget.closest("[data-slot=accordion-item]")
-                                                        if (item) e.dataTransfer.setDragImage(item, 16, 16)
-                                                    }}
-                                                    onDragEnd={endDrag}
-                                                >
-                                                    <GripVertical className="h-4 w-4" />
-                                                </span>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <span
+                                                            draggable
+                                                            className="-ml-2 cursor-grab p-1 text-muted-foreground active:cursor-grabbing"
+                                                            onDragStart={e => {
+                                                                setDragFrom(index)
+                                                                e.dataTransfer.effectAllowed = "move"
+                                                                // On fait glisser tout le bloc, pas seulement la poignée
+                                                                const item = e.currentTarget.closest("[data-slot=accordion-item]")
+                                                                if (item) e.dataTransfer.setDragImage(item, 16, 16)
+                                                            }}
+                                                            onDragEnd={endDrag}
+                                                        >
+                                                            <GripVertical className="h-4 w-4" />
+                                                        </span>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Glisser pour changer l&apos;ordre dans le PDF</TooltipContent>
+                                                </Tooltip>
                                                 <AccordionTrigger className="hover:no-underline py-4">
                                                     <span className="flex flex-1 items-center gap-2">
                                                         {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
@@ -360,11 +365,11 @@ export default function BuilderClient({ note, members, softwares }: {
                                                     </span>
                                                 </AccordionTrigger>
                                                 {/* L'ordre des blocs est celui du PDF */}
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" title="Monter" aria-label={`Monter ${name}`}
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" tooltip={`Monter ${name} dans le PDF`}
                                                     disabled={index === 0} onClick={() => move(index, index - 1)}>
                                                     <ArrowUp className="h-3.5 w-3.5" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" title="Descendre" aria-label={`Descendre ${name}`}
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" tooltip={`Descendre ${name} dans le PDF`}
                                                     disabled={index === fields.length - 1} onClick={() => move(index, index + 1)}>
                                                     <ArrowDown className="h-3.5 w-3.5" />
                                                 </Button>
@@ -476,10 +481,10 @@ function ItemList({ form, name, label, color }: {
                         className="min-h-[40px] text-sm bg-slate-50/50"
                         onPaste={(e) => handlePaste(e, idx)}
                     />
-                    <Button variant="destructive" className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700" size="icon" onClick={() => remove(idx)}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="destructive" className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700" size="icon" tooltip="Supprimer cette ligne" onClick={() => remove(idx)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
             ))}
-            <Button variant="ghost" size="sm" className="ml-4" onClick={() => append({ text: "" })}><Plus className="h-4 w-4" />Ajouter une ligne</Button>
+            <Button variant="ghost" size="sm" className="ml-4" tooltip="Ajouter une ligne vide" onClick={() => append({ text: "" })}><Plus className="h-4 w-4" />Ajouter une ligne</Button>
         </div>
     )
 }

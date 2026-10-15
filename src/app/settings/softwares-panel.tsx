@@ -66,7 +66,8 @@ function LogoSlot({ software, kind }: { software: Software; kind: "3d" | "plat" 
                 <div className="flex flex-col items-start gap-1 min-w-0">
                     {!logo && <p className="text-[11px] text-muted-foreground">{labels.none}</p>}
                     <div className="flex flex-wrap gap-1">
-                        <Button size="sm" variant="outline" className="h-7 text-xs" disabled={isPending} onClick={() => input.current?.click()}>
+                        <Button size="sm" variant="outline" className="h-7 text-xs" disabled={isPending} onClick={() => input.current?.click()}
+                            tooltip={`${logo ? "Remplacer le" : "Importer un"} ${labels.title.toLowerCase()} (SVG, PNG, WebP ou JPEG, 2 Mo max)`}>
                             <Upload className="h-3 w-3" />{logo ? "Remplacer" : "Importer"}
                         </Button>
                         {logo && (
@@ -75,7 +76,7 @@ function LogoSlot({ software, kind }: { software: Software; kind: "3d" | "plat" 
                                 variant="ghost"
                                 className="h-7 text-xs"
                                 disabled={isPending}
-                                title="Revenir au logo Ianord par défaut"
+                                tooltip="Revenir au logo Ianord par défaut"
                                 onClick={() => run(() => setSoftwareLogo(software.id, kind, null))}
                             >
                                 <RotateCcw className="h-3 w-3" />Logo Ianord
@@ -114,14 +115,14 @@ function SoftwareRow({ software, isFirst, isLast }: { software: Software; isFirs
                 {editing ? (
                     <>
                         <Input value={name} onChange={e => setName(e.target.value)} className="h-8 text-sm" aria-label="Nom du logiciel" autoFocus />
-                        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={cancel} disabled={isPending} title="Annuler">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={cancel} disabled={isPending} tooltip="Annuler le renommage">
                             <X className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                             size="icon"
                             className="h-8 w-8 shrink-0"
                             disabled={isPending}
-                            title="Enregistrer"
+                            tooltip="Enregistrer le nouveau nom"
                             onClick={() => run(() => renameSoftware(software.id, name), () => setEditing(false))}
                         >
                             <Check className="h-3.5 w-3.5" />
@@ -131,15 +132,15 @@ function SoftwareRow({ software, isFirst, isLast }: { software: Software; isFirs
                     <>
                         <p className="flex-1 font-medium text-sm">{software.name}</p>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                            <Button size="icon" variant="ghost" className="h-8 w-8" disabled={isPending || isFirst} title="Monter"
+                            <Button size="icon" variant="ghost" className="h-8 w-8" disabled={isPending || isFirst} tooltip="Monter dans la liste"
                                 onClick={() => run(() => moveSoftware(software.id, -1))}>
                                 <ArrowUp className="h-3.5 w-3.5" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8" disabled={isPending || isLast} title="Descendre"
+                            <Button size="icon" variant="ghost" className="h-8 w-8" disabled={isPending || isLast} tooltip="Descendre dans la liste"
                                 onClick={() => run(() => moveSoftware(software.id, 1))}>
                                 <ArrowDown className="h-3.5 w-3.5" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-slate-700" disabled={isPending} title="Renommer"
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-slate-700" disabled={isPending} tooltip="Renommer le logiciel"
                                 onClick={() => setEditing(true)}>
                                 <Pencil className="h-3.5 w-3.5" />
                             </Button>
@@ -148,7 +149,7 @@ function SoftwareRow({ software, isFirst, isLast }: { software: Software; isFirs
                                 description="Les notes existantes le garderont, avec le logo Ianord."
                                 onConfirm={() => run(() => deleteSoftware(software.id))}
                             >
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50" disabled={isPending} title="Supprimer">
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50" disabled={isPending} tooltip="Supprimer le logiciel">
                                     <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                             </ConfirmDialog>
@@ -185,7 +186,7 @@ export function SoftwaresPanel({ softwares }: { softwares: Software[] }) {
                 <CardContent>
                     <form onSubmit={handleAdd} className="flex gap-2">
                         <Input value={name} onChange={e => setName(e.target.value)} placeholder="ex : WebPlanning" aria-label="Nom du nouveau logiciel" required />
-                        <Button type="submit" disabled={isPending}>
+                        <Button type="submit" disabled={isPending} tooltip="Ajouter ce logiciel à la liste">
                             <Plus className="h-4 w-4" />Ajouter
                         </Button>
                     </form>

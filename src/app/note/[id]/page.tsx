@@ -38,11 +38,11 @@ export default async function PrintNotePage({ params }: { params: Promise<{ id: 
 
             {/* Barre d'outils */}
             <div className="max-w-4xl mx-auto mb-6 flex justify-between items-center print:hidden">
-                <Button variant="ghost" asChild>
+                <Button variant="ghost" tooltip="Revenir à l'accueil" asChild>
                     <Link href="/"><ArrowLeft className="h-4 w-4" />Retour</Link>
                 </Button>
                 <div className="flex gap-2">
-                    <Button variant="secondary" asChild>
+                    <Button variant="secondary" tooltip="Modifier le contenu de cette note" asChild>
                         <Link href={`/builder?id=${id}`}><Pencil className="h-4 w-4" /> Éditer</Link>
                     </Button>
                     <PrintButton />
