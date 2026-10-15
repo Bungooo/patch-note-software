@@ -57,6 +57,11 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
 
     const authors = useMemo(() => [...new Set(notes.map(n => n.author))].sort((a, b) => a.localeCompare(b)), [notes])
 
+    // Recherche dans le menu des logiciels, sans tenir compte des accents ni des majuscules
+    const [softwareQuery, setSoftwareQuery] = useState("")
+    const normalize = (v: string) => v.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase()
+    const matchingSoftwares = allSoftwares.filter(s => normalize(s.name).includes(normalize(softwareQuery)))
+
     const toggleSoftware = (name: string) => {
         setSelected(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name])
         setVisibleCount(10)
@@ -108,7 +113,7 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                 <div className="flex flex-col gap-2 items-start">
                     <span className="text-sm font-medium">Logiciel</span>
                     <div className="relative">
-                        <DropdownMenu>
+                        <DropdownMenu onOpenChange={open => !open && setSoftwareQuery("")}>
                             <DropdownMenuTrigger asChild>
                                 <Button
                                     variant="outline"
@@ -124,6 +129,24 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="w-[240px]">
+                                <Input
+                                    autoFocus
+                                    value={softwareQuery}
+                                    onChange={e => setSoftwareQuery(e.target.value)}
+                                    onKeyDown={e => {
+                                        // Entrée coche le premier résultat, ↓ descend dans la liste, Échap reste géré par le menu
+                                        if (e.key === "Enter" && matchingSoftwares[0]) toggleSoftware(matchingSoftwares[0].name)
+                                        if (e.key === "ArrowDown") {
+                                            e.preventDefault()
+                                            const items = e.currentTarget.closest("[role=menu]")?.querySelectorAll<HTMLElement>("[role=menuitemcheckbox]")
+                                            items?.[items.length > 1 ? 1 : 0]?.focus()
+                                        }
+                                        if (e.key !== "Escape") e.stopPropagation()
+                                    }}
+                                    placeholder="Rechercher un logiciel…"
+                                    aria-label="Rechercher un logiciel"
+                                    className="h-8 mb-1"
+                                />
                                 <DropdownMenuCheckboxItem
                                     className={cn("mt-px", SELECTED_ITEM)}
                                     checked={selected.length === 0}
@@ -133,7 +156,10 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                                     Tous les logiciels
                                 </DropdownMenuCheckboxItem>
                                 <DropdownMenuSeparator />
-                                {allSoftwares.map(s => (
+                                {matchingSoftwares.length === 0 && (
+                                    <p className="px-2 py-1.5 text-sm text-muted-foreground">Aucun logiciel trouvé</p>
+                                )}
+                                {matchingSoftwares.map(s => (
                                     <DropdownMenuCheckboxItem
                                         className={cn("mt-px", SELECTED_ITEM)}
                                         key={s.name}
