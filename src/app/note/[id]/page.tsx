@@ -54,11 +54,23 @@ export default async function PrintNotePage({ params }: { params: Promise<{ id: 
                 {/* --- PAGE DE GARDE --- */}
                 <div className="relative flex flex-col justify-center min-h-[90vh] print:min-h-0 print:h-[220mm] pb-10 print:pb-0 break-after-page">
 
-                    {/* Masque pour cacher le numéro de page sur la page 1 */}
-                    <div className="hidden print:block absolute bottom-0 right-0 w-32 h-20 bg-white z-[60]"></div>
+                    {/* Dégradé pleine page. À l'impression, il recouvre les marges du conteneur et passe
+                        au-dessus du logo et du pied de page fixes (z-50) : la couverture a son propre logo. */}
+                    <div
+                        aria-hidden
+                        className="cover-background absolute -inset-x-8 -top-8 bottom-0 print:-top-32 print:bottom-auto print:h-[297mm] print:z-[55]"
+                    >
+                        <Image
+                            src="/logo-ianord-bleu.svg"
+                            alt=""
+                            width={100}
+                            height={34}
+                            className="hidden print:block absolute top-8 left-8"
+                        />
+                    </div>
 
                     {/* Contenu Central */}
-                    <div className="flex flex-col items-center justify-center text-center space-y-6">
+                    <div className="relative print:z-[56] flex flex-col items-center justify-center text-center space-y-6">
 
                         <div className="space-y-4">
                             <h1 className="text-[48px] font-bold font-heading text-slate-800 tracking-tight">

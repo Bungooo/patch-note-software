@@ -148,10 +148,20 @@
   }
 }
 
+/* Page de garde : même dégradé que l'éditeur de tutoriels (page A4 de 297 mm) :
+   blanc jusqu'à 104 mm, teinte froide pleine à 192 mm, halo de 105 mm dans l'angle bas droit */
+.cover-background {
+  --cover-tint: #F6FCFF;
+  --cover-glow: #FAF4FF;
+  background:
+    radial-gradient(circle 105mm at 100% 100%, var(--cover-glow), transparent),
+    linear-gradient(to bottom, white 35%, var(--cover-tint) 64.6%);
+}
+
 @media print {
   @page {
     margin: 0 !important;
-    size: auto;
+    size: A4;
   }
 
 
