@@ -60,6 +60,7 @@ export function PeriodFilter({ dates, value, onChange }: {
                     <Button
                         variant="outline"
                         className="w-[220px] justify-between font-normal"
+                        tooltip="Filtrer par mois ou par année"
                         style={{ backgroundColor: "var(--token-surface-secondary)" }}
                     >
                         <span className="flex items-center gap-2 truncate">
@@ -94,6 +95,8 @@ export function PeriodFilter({ dates, value, onChange }: {
                                     disabled={count === 0}
                                     aria-pressed={active}
                                     aria-label={`${label(ym)}, ${patchs(count)}`}
+                                    tooltip={count === 0 ? `Aucune note en ${label(ym).toLowerCase()}`
+                                        : active ? "Retirer ce filtre" : `Afficher les notes de ${label(ym).toLowerCase()}`}
                                     // Recliquer sur le mois choisi le désélectionne
                                     onClick={() => select(active ? "all" : ym)}
                                     className={cn("h-auto flex-col gap-0 py-2", active && SELECTED)}

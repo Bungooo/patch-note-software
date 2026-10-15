@@ -10,7 +10,7 @@ import { fr } from "date-fns/locale"
 import { ArrowDown, ArrowLeft, ArrowUp, Calendar as CalendarIcon, Check, GripVertical, Plus, PlusCircle, Save, Trash2 } from "lucide-react"
 import { PatchNoteSchema, type PatchNoteValues } from "@/lib/schema"
 import { fullName, type Member, type PatchNote, type Software } from "@/lib/types"
-import { cn, parseLocalDate } from "@/lib/utils"
+import { cn, parseLocalDate, SELECTED } from "@/lib/utils"
 import { DEFAULT_LOGO, softwareFinder } from "@/lib/logos"
 import { savePatchNote, deletePatchNote } from "./actions"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -254,21 +254,22 @@ export default function BuilderClient({ note, members, softwares }: {
                             const section = sections[index]
                             const lines = section ? section.features.length + section.fixes.length : 0
                             const tile = (
-                                <button
-                                    type="button"
+                                <Button
+                                    variant="ghost"
                                     aria-pressed={index !== -1}
+                                    tooltip={index === -1 ? `Ajouter ${name} à la note` : `Retirer ${name} de la note`}
                                     // Avec du contenu, le clic ouvre la confirmation (ConfirmDialog) au lieu de retirer directement
                                     onClick={lines ? undefined : () => (index === -1 ? append({ name, features: [], fixes: [] }) : remove(index))}
                                     className={cn(
-                                        "flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
-                                        index !== -1 ? "border-primary bg-primary/5 font-medium" : "hover:bg-slate-50"
+                                        "h-auto justify-start gap-2 rounded-lg border px-3 py-2 text-left font-normal",
+                                        index !== -1 && SELECTED
                                     )}
                                 >
                                     {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
                                     <img src={findSoftware(name)?.logoFlat?.url ?? DEFAULT_LOGO} alt="" className="h-5 w-5 object-contain" />
                                     <span className="flex-1 truncate">{name}</span>
                                     {index !== -1 && <Check className="h-4 w-4 text-primary" />}
-                                </button>
+                                </Button>
                             )
                             return lines ? (
                                 <ConfirmDialog

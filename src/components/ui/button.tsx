@@ -67,7 +67,14 @@ function Button({
   if (!tooltip) return button
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipTrigger
+        asChild
+        // Pas d'infobulle quand une fenêtre qui s'ouvre place le focus sur le bouton ; seulement au clavier
+        onFocus={e => { if (!e.currentTarget.matches(":focus-visible")) e.preventDefault() }}
+      >
+        {/* Un bouton désactivé ne réagit pas au survol : l'infobulle est portée par un conteneur */}
+        {props.disabled ? <span tabIndex={0} className="inline-flex *:flex-1">{button}</span> : button}
+      </TooltipTrigger>
       <TooltipContent>{tooltip}</TooltipContent>
     </Tooltip>
   )

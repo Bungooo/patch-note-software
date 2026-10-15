@@ -4,6 +4,7 @@ import { useState, useMemo } from "react"
 import { PatchNoteCard } from "@/components/patch-note-card"
 import { PeriodFilter } from "@/components/period-filter"
 import { FilterClear } from "@/components/filter-clear"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { PatchNote, Software } from "@/lib/types"
 import { cn, formatDate, SELECTED_ITEM } from "@/lib/utils"
 import { DEFAULT_LOGO, softwareFinder } from "@/lib/logos"
@@ -113,6 +114,7 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                                 <Button
                                     variant="outline"
                                     className="w-[240px] justify-between font-normal"
+                                    tooltip="Filtrer par logiciel (plusieurs choix possibles)"
                                     style={{ backgroundColor: "var(--token-surface-secondary)" }}
                                 >
                                     <span className="truncate">
@@ -159,13 +161,18 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                     <span className="text-sm font-medium">Auteur</span>
                     <div className="relative">
                         <Select value={author} onValueChange={resetAndSet(setAuthor)}>
-                            {/* Filtre actif : le chevron (dernier svg) laisse la place à la croix */}
-                            <SelectTrigger
-                                className={cn("w-[200px]", author !== "all" && "[&>svg:last-child]:invisible")}
-                                style={{ backgroundColor: "var(--token-surface-secondary)" }}
-                            >
-                                <SelectValue placeholder="Auteur" />
-                            </SelectTrigger>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    {/* Filtre actif : le chevron (dernier svg) laisse la place à la croix */}
+                                    <SelectTrigger
+                                        className={cn("w-[200px]", author !== "all" && "[&>svg:last-child]:invisible")}
+                                        style={{ backgroundColor: "var(--token-surface-secondary)" }}
+                                    >
+                                        <SelectValue placeholder="Auteur" />
+                                    </SelectTrigger>
+                                </TooltipTrigger>
+                                <TooltipContent>Filtrer par auteur</TooltipContent>
+                            </Tooltip>
                             <SelectContent>
                                 <SelectItem value="all" className={SELECTED_ITEM}>Tous les auteurs</SelectItem>
                                 {authors.map(a => (
