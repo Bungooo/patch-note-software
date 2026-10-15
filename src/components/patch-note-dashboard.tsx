@@ -2,15 +2,15 @@
 
 import { useState, useMemo } from "react"
 import { PatchNoteCard } from "@/components/patch-note-card"
+import { PeriodFilter } from "@/components/period-filter"
 import type { PatchNote, Software } from "@/lib/types"
-import { formatDate, parseLocalDate } from "@/lib/utils"
+import { formatDate } from "@/lib/utils"
 import { DEFAULT_LOGO, softwareFinder } from "@/lib/logos"
 import { Input } from "@/components/ui/input"
 import {
     Select,
     SelectContent,
     SelectItem,
-    SelectSeparator,
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
@@ -27,12 +27,6 @@ import { Plus, ChevronDown, Settings } from "lucide-react"
 
 // Fond en plus de la coche : shadcn ne marque l'élément coché que par une petite coche
 const CHECKED = "mt-px data-[state=checked]:bg-blue-50 data-[state=checked]:text-blue-700 data-[state=checked]:font-medium data-[state=checked]:focus:bg-blue-100 data-[state=checked]:focus:text-blue-700"
-
-// "2026-10" → "Octobre 2026"
-const monthLabel = (period: string) => {
-    const label = parseLocalDate(`${period}-01`).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-    return label.charAt(0).toUpperCase() + label.slice(1)
-}
 
 export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; softwares: Software[] }) {
     const [search, setSearch] = useState("")
@@ -64,13 +58,6 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
     }, [notes, softwares])
 
     const authors = useMemo(() => [...new Set(notes.map(n => n.author))].sort((a, b) => a.localeCompare(b)), [notes])
-
-    // Années et mois présents dans les notes, du plus récent au plus ancien
-    const periods = useMemo(() => {
-        const months = [...new Set(notes.map(n => n.date.slice(0, 7)))].sort().reverse()
-        const years = [...new Set(months.map(m => m.slice(0, 4)))]
-        return years.map(year => ({ year, months: months.filter(m => m.startsWith(year)) }))
-    }, [notes])
 
     const toggleSoftware = (name: string) => {
         setSelected(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name])
@@ -180,19 +167,7 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
 
                     <div className="flex flex-col gap-2 items-start">
                         <span className="text-sm font-medium">Période</span>
-                        <Select value={period} onValueChange={resetAndSet(setPeriod)}>
-                            <SelectTrigger className="w-[180px]" style={{ backgroundColor: "var(--token-surface-secondary)" }}>
-                                <SelectValue placeholder="Période" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Toutes les périodes</SelectItem>
-                                {periods.map(({ year, months }) => [
-                                    <SelectSeparator key={`sep-${year}`} />,
-                                    <SelectItem key={year} value={year} className="font-medium">Toute l&apos;année {year}</SelectItem>,
-                                    ...months.map(m => <SelectItem key={m} value={m}>{monthLabel(m)}</SelectItem>),
-                                ])}
-                            </SelectContent>
-                        </Select>
+                        <PeriodFilter dates={notes.map(n => n.date)} value={period} onChange={resetAndSet(setPeriod)} />
                     </div>
                 </div>
 
