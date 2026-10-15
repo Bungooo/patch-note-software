@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import { CalendarIcon, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn, parseLocalDate } from "@/lib/utils"
+import { cn, parseLocalDate, SELECTED } from "@/lib/utils"
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 const monthName = (ym: string, month: "long" | "short") =>
@@ -88,16 +88,16 @@ export function PeriodFilter({ dates, value, onChange }: {
                         return (
                             <Button
                                 key={ym}
-                                variant={active ? "default" : "ghost"}
+                                variant="ghost"
                                 disabled={count === 0}
                                 aria-pressed={active}
                                 aria-label={`${label(ym)}, ${patchs(count)}`}
                                 // Recliquer sur le mois choisi le désélectionne
                                 onClick={() => select(active ? "all" : ym)}
-                                className="h-auto flex-col gap-0 py-2"
+                                className={cn("h-auto flex-col gap-0 py-2", active && SELECTED)}
                             >
                                 <span>{monthName(ym, "short")}</span>
-                                <span className={cn("text-[11px] font-normal", active ? "opacity-80" : "text-muted-foreground", count === 0 && "invisible")}>
+                                <span className={cn("text-[11px] font-normal", active ? "text-primary/80" : "text-muted-foreground", count === 0 && "invisible")}>
                                     {patchs(count)}
                                 </span>
                             </Button>
@@ -108,8 +108,8 @@ export function PeriodFilter({ dates, value, onChange }: {
                 <div className="mt-3 pt-3 border-t flex items-center justify-between gap-2">
                     <Button
                         size="sm"
-                        variant={value === String(year) ? "default" : "outline"}
-                        className="h-8 text-xs"
+                        variant="outline"
+                        className={cn("h-8 text-xs", value === String(year) && cn(SELECTED, "border-primary/30"))}
                         disabled={!counts.get(String(year))}
                         onClick={() => select(String(year))}
                     >

@@ -138,9 +138,8 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                                         // Garde le menu ouvert pour cocher plusieurs logiciels
                                         onSelect={e => e.preventDefault()}
                                     >
-                                        {/* Le logo Ianord, foncé, passe en blanc sur le fond de l'élément coché */}
                                         {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
-                                        <img src={s.logo ?? DEFAULT_LOGO} alt="" className={cn("h-4 w-4 object-contain", !s.logo && "in-data-[state=checked]:brightness-0 in-data-[state=checked]:invert")} />
+                                        <img src={s.logo ?? DEFAULT_LOGO} alt="" className="h-4 w-4 object-contain" />
                                         {s.name}
                                     </DropdownMenuCheckboxItem>
                                 ))}
