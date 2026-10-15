@@ -13,6 +13,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus, ChevronDown, Settings } from "lucide-react"
@@ -34,7 +41,8 @@ const MONTHS = [
 
 export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; softwares: Software[] }) {
     const [search, setSearch] = useState("")
-    const [software, setSoftware] = useState<string>("all")
+    // Aucun logiciel coché = tous les logiciels
+    const [selected, setSelected] = useState<string[]>([])
     const [month, setMonth] = useState<string>("all")
     const [visibleCount, setVisibleCount] = useState(10)
 
@@ -58,16 +66,21 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
             .sort((a, b) => Number(!a.logo) - Number(!b.logo) || a.rank - b.rank || a.name.localeCompare(b.name))
     }, [notes, softwares])
 
+    const toggleSoftware = (name: string) => {
+        setSelected(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name])
+        setVisibleCount(10)
+    }
+
     const filteredNotes = useMemo(() => {
         const searchLower = search.toLowerCase()
         return notes.filter(note =>
             (note.author.toLowerCase().includes(searchLower) ||
                 note.intro.toLowerCase().includes(searchLower) ||
                 formatDate(note.date).includes(searchLower)) &&
-            (software === "all" || note.sections.some(s => s.name === software)) &&
+            (selected.length === 0 || note.sections.some(s => selected.includes(s.name))) &&
             (month === "all" || parseLocalDate(note.date).getMonth().toString() === month)
         )
-    }, [notes, search, software, month])
+    }, [notes, search, selected, month])
 
     return (
         <div className="py-10">
@@ -90,21 +103,45 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
 
                     <div className="flex flex-col gap-2 items-start">
                         <span className="text-sm font-medium">Logiciel</span>
-                        <Select value={software} onValueChange={resetAndSet(setSoftware)}>
-                            <SelectTrigger className="w-[240px]" style={{ backgroundColor: "var(--token-surface-secondary)" }}>
-                                <SelectValue placeholder="Logiciel" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Tous les logiciels</SelectItem>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className="w-[240px] justify-between font-normal"
+                                    style={{ backgroundColor: "var(--token-surface-secondary)" }}
+                                >
+                                    <span className="truncate">
+                                        {selected.length === 0 ? "Tous les logiciels"
+                                            : selected.length === 1 ? selected[0]
+                                                : `${selected.length} logiciels`}
+                                    </span>
+                                    <ChevronDown className="h-4 w-4 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-[240px]">
+                                <DropdownMenuCheckboxItem
+                                    checked={selected.length === 0}
+                                    onCheckedChange={() => { setSelected([]); setVisibleCount(10) }}
+                                    onSelect={e => e.preventDefault()}
+                                >
+                                    Tous les logiciels
+                                </DropdownMenuCheckboxItem>
+                                <DropdownMenuSeparator />
                                 {allSoftwares.map(s => (
-                                    <SelectItem key={s.name} value={s.name}>
+                                    <DropdownMenuCheckboxItem
+                                        key={s.name}
+                                        checked={selected.includes(s.name)}
+                                        onCheckedChange={() => toggleSoftware(s.name)}
+                                        // Garde le menu ouvert pour cocher plusieurs logiciels
+                                        onSelect={e => e.preventDefault()}
+                                    >
                                         {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
                                         <img src={s.logo ?? DEFAULT_LOGO} alt="" className="h-4 w-4 object-contain" />
                                         {s.name}
-                                    </SelectItem>
+                                    </DropdownMenuCheckboxItem>
                                 ))}
-                            </SelectContent>
-                        </Select>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
 
                     <div className="flex flex-col gap-2 items-start">
