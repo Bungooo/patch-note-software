@@ -10,6 +10,7 @@ import { ArrowLeft, Calendar as CalendarIcon, Plus, PlusCircle, Save, Trash2 } f
 import { PatchNoteSchema, type PatchNoteValues } from "@/lib/schema"
 import { fullName, type Member, type PatchNote, type Software } from "@/lib/types"
 import { cn, parseLocalDate } from "@/lib/utils"
+import { DEFAULT_LOGO, softwareFinder } from "@/lib/logos"
 import { savePatchNote, deletePatchNote } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -85,6 +86,7 @@ export default function BuilderClient({ note, members, softwares }: {
     const sections = useWatch({ control: form.control, name: "sections" })
     const authorOptions = withCurrent(members.map(fullName), note?.author)
     const softwareNames = softwares.map(s => s.name)
+    const findSoftware = softwareFinder(softwares)
 
     const saveButton = (size?: "lg") => (
         <Button onClick={form.handleSubmit(onSubmit)} size={size} disabled={!isValid || isSubmitting}>
@@ -213,7 +215,11 @@ export default function BuilderClient({ note, members, softwares }: {
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {withCurrent(softwareNames, field.value).map(s => (
-                                                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                                                            <SelectItem key={s} value={s}>
+                                                                {/* eslint-disable-next-line @next/next/no-img-element -- logos servis depuis la base */}
+                                                                <img src={findSoftware(s)?.logoFlat?.url ?? DEFAULT_LOGO} alt="" className="h-4 w-4 object-contain" />
+                                                                {s}
+                                                            </SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
