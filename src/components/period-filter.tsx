@@ -1,8 +1,9 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { CalendarIcon, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
+import { CalendarIcon, Check, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { FilterClear } from "@/components/filter-clear"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn, parseLocalDate, SELECTED } from "@/lib/utils"
 
@@ -46,82 +47,89 @@ export function PeriodFilter({ dates, value, onChange }: {
     }
 
     return (
-        <Popover
-            open={open}
-            onOpenChange={o => {
-                // À l'ouverture, se placer sur l'année de la période choisie
-                if (o) setYear(value === "all" ? maxYear : Number(value.slice(0, 4)))
-                setOpen(o)
-            }}
-        >
-            <PopoverTrigger asChild>
-                <Button
-                    variant="outline"
-                    className="w-[220px] justify-between font-normal"
-                    style={{ backgroundColor: "var(--token-surface-secondary)" }}
-                >
-                    <span className="flex items-center gap-2 truncate">
-                        <CalendarIcon className="h-4 w-4 opacity-50" />
-                        {label(value)}
-                    </span>
-                    <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-[340px] p-3">
-                <div className="flex items-center justify-between mb-3">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Année précédente"
-                        disabled={year <= minYear} onClick={() => setYear(y => y - 1)}>
-                        <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <span className="text-sm font-semibold">{year}</span>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Année suivante"
-                        disabled={year >= maxYear} onClick={() => setYear(y => y + 1)}>
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
-                </div>
-
-                <div className="grid grid-cols-3 gap-1">
-                    {Array.from({ length: 12 }, (_, i) => {
-                        const ym = `${year}-${String(i + 1).padStart(2, "0")}`
-                        const count = counts.get(ym) ?? 0
-                        const active = value === ym
-                        return (
-                            <Button
-                                key={ym}
-                                variant="ghost"
-                                disabled={count === 0}
-                                aria-pressed={active}
-                                aria-label={`${label(ym)}, ${patchs(count)}`}
-                                // Recliquer sur le mois choisi le désélectionne
-                                onClick={() => select(active ? "all" : ym)}
-                                className={cn("h-auto flex-col gap-0 py-2", active && SELECTED)}
-                            >
-                                <span>{monthName(ym, "short")}</span>
-                                <span className={cn("text-[11px] font-normal", active ? "text-primary/80" : "text-muted-foreground", count === 0 && "invisible")}>
-                                    {patchs(count)}
-                                </span>
-                            </Button>
-                        )
-                    })}
-                </div>
-
-                <div className="mt-3 pt-3 border-t flex items-center justify-between gap-2">
+        <div className="relative">
+            <Popover
+                open={open}
+                onOpenChange={o => {
+                    // À l'ouverture, se placer sur l'année de la période choisie
+                    if (o) setYear(value === "all" ? maxYear : Number(value.slice(0, 4)))
+                    setOpen(o)
+                }}
+            >
+                <PopoverTrigger asChild>
                     <Button
-                        size="sm"
                         variant="outline"
-                        className={cn("h-8 text-xs", value === String(year) && cn(SELECTED, "border-transparent"))}
-                        disabled={!counts.get(String(year))}
-                        onClick={() => select(String(year))}
+                        className="w-[220px] justify-between font-normal"
+                        style={{ backgroundColor: "var(--token-surface-secondary)" }}
                     >
-                        Toute l&apos;année {year} · {patchs(counts.get(String(year)) ?? 0)}
+                        <span className="flex items-center gap-2 truncate">
+                            <CalendarIcon className="h-4 w-4 opacity-50" />
+                            {label(value)}
+                        </span>
+                        <ChevronDown className={cn("h-4 w-4 opacity-50", value !== "all" && "invisible")} />
                     </Button>
-                    {value !== "all" && (
-                        <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => select("all")}>
-                            Réinitialiser
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-[340px] p-3">
+                    <div className="flex items-center justify-between mb-3">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Année précédente"
+                            disabled={year <= minYear} onClick={() => setYear(y => y - 1)}>
+                            <ChevronLeft className="h-4 w-4" />
                         </Button>
-                    )}
-                </div>
-            </PopoverContent>
-        </Popover>
+                        <span className="text-sm font-semibold">{year}</span>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Année suivante"
+                            disabled={year >= maxYear} onClick={() => setYear(y => y + 1)}>
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1">
+                        {Array.from({ length: 12 }, (_, i) => {
+                            const ym = `${year}-${String(i + 1).padStart(2, "0")}`
+                            const count = counts.get(ym) ?? 0
+                            const active = value === ym
+                            return (
+                                <Button
+                                    key={ym}
+                                    variant="ghost"
+                                    disabled={count === 0}
+                                    aria-pressed={active}
+                                    aria-label={`${label(ym)}, ${patchs(count)}`}
+                                    // Recliquer sur le mois choisi le désélectionne
+                                    onClick={() => select(active ? "all" : ym)}
+                                    className={cn("h-auto flex-col gap-0 py-2", active && SELECTED)}
+                                >
+                                    <span className="flex items-center gap-1">
+                                    {active && <Check className="h-3.5 w-3.5" />}
+                                    {monthName(ym, "short")}
+                                </span>
+                                    <span className={cn("text-[11px] font-normal", active ? "text-primary/80" : "text-muted-foreground", count === 0 && "invisible")}>
+                                        {patchs(count)}
+                                    </span>
+                                </Button>
+                            )
+                        })}
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t flex items-center justify-between gap-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className={cn("h-8 text-xs", value === String(year) && cn(SELECTED, "border-transparent"))}
+                            disabled={!counts.get(String(year))}
+                            onClick={() => select(String(year))}
+                        >
+                            {value === String(year) && <Check className="h-3.5 w-3.5" />}
+                            Toute l&apos;année {year} · {patchs(counts.get(String(year)) ?? 0)}
+                        </Button>
+                        {value !== "all" && (
+                            <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => select("all")}>
+                                Réinitialiser
+                            </Button>
+                        )}
+                    </div>
+                </PopoverContent>
+            </Popover>
+            {value !== "all" && <FilterClear label="Retirer le filtre période" onClear={() => onChange("all")} />}
+        </div>
     )
 }

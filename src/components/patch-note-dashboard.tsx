@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import { PatchNoteCard } from "@/components/patch-note-card"
 import { PeriodFilter } from "@/components/period-filter"
+import { FilterClear } from "@/components/filter-clear"
 import type { PatchNote, Software } from "@/lib/types"
 import { cn, formatDate, SELECTED_ITEM } from "@/lib/utils"
 import { DEFAULT_LOGO, softwareFinder } from "@/lib/logos"
@@ -88,22 +89,25 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                 </div>
             </div>
 
-            {/* Filtres */}
-            <div className="py-10">
-                <div className="flex flex-wrap items-end gap-4">
-                    <div className="flex flex-col gap-2 items-start">
-                        <span className="text-sm font-medium">Recherche</span>
+            {/* Filtres : un filtre actif remplace son chevron par une croix qui le retire */}
+            <div className="flex flex-wrap items-end gap-4 py-10">
+                <div className="flex flex-col gap-2 items-start">
+                    <span className="text-sm font-medium">Recherche</span>
+                    <div className="relative">
                         <Input
                             placeholder="Rechercher..."
                             value={search}
                             onChange={(e) => { setSearch(e.target.value); setVisibleCount(10) }}
-                            className="w-[200px]"
+                            className="w-[200px] pr-8"
                             style={{ backgroundColor: "var(--token-surface-secondary)" }}
                         />
+                        {search && <FilterClear label="Effacer la recherche" onClear={() => resetAndSet(setSearch)("")} />}
                     </div>
+                </div>
 
-                    <div className="flex flex-col gap-2 items-start">
-                        <span className="text-sm font-medium">Logiciel</span>
+                <div className="flex flex-col gap-2 items-start">
+                    <span className="text-sm font-medium">Logiciel</span>
+                    <div className="relative">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
@@ -116,7 +120,7 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                                             : selected.length === 1 ? selected[0]
                                                 : `${selected.length} logiciels`}
                                     </span>
-                                    <ChevronDown className="h-4 w-4 opacity-50" />
+                                    <ChevronDown className={cn("h-4 w-4 opacity-50", selected.length > 0 && "invisible")} />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="w-[240px]">
@@ -145,12 +149,21 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                                 ))}
                             </DropdownMenuContent>
                         </DropdownMenu>
+                        {selected.length > 0 && (
+                            <FilterClear label="Retirer le filtre logiciel" onClear={() => { setSelected([]); setVisibleCount(10) }} />
+                        )}
                     </div>
+                </div>
 
-                    <div className="flex flex-col gap-2 items-start">
-                        <span className="text-sm font-medium">Auteur</span>
+                <div className="flex flex-col gap-2 items-start">
+                    <span className="text-sm font-medium">Auteur</span>
+                    <div className="relative">
                         <Select value={author} onValueChange={resetAndSet(setAuthor)}>
-                            <SelectTrigger className="w-[200px]" style={{ backgroundColor: "var(--token-surface-secondary)" }}>
+                            {/* Filtre actif : le chevron (dernier svg) laisse la place à la croix */}
+                            <SelectTrigger
+                                className={cn("w-[200px]", author !== "all" && "[&>svg:last-child]:invisible")}
+                                style={{ backgroundColor: "var(--token-surface-secondary)" }}
+                            >
                                 <SelectValue placeholder="Auteur" />
                             </SelectTrigger>
                             <SelectContent>
@@ -160,14 +173,14 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                                 ))}
                             </SelectContent>
                         </Select>
-                    </div>
-
-                    <div className="flex flex-col gap-2 items-start">
-                        <span className="text-sm font-medium">Période</span>
-                        <PeriodFilter dates={notes.map(n => n.date)} value={period} onChange={resetAndSet(setPeriod)} />
+                        {author !== "all" && <FilterClear label="Retirer le filtre auteur" onClear={() => resetAndSet(setAuthor)("all")} />}
                     </div>
                 </div>
 
+                <div className="flex flex-col gap-2 items-start">
+                    <span className="text-sm font-medium">Période</span>
+                    <PeriodFilter dates={notes.map(n => n.date)} value={period} onChange={resetAndSet(setPeriod)} />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
