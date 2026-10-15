@@ -25,8 +25,8 @@ export function SettingsClient({ members, softwares }: { members: Member[]; soft
 
             {/* Menu vertical à gauche, contenu à droite sur une largeur lisible */}
             <Tabs defaultValue="members" orientation="vertical" className="flex-col md:flex-row gap-8">
-                {/* Menu dans une carte à sa propre hauteur, qui reste visible au défilement */}
-                <div className="w-full md:w-52 shrink-0 self-start rounded-xl border bg-card p-2 md:sticky md:top-6">
+                {/* Menu dans une carte de la hauteur de l'écran (moins les marges), fixée pendant le défilement */}
+                <div className="w-full md:w-52 shrink-0 self-start rounded-xl border bg-card p-2 md:sticky md:top-6 md:h-[calc(100vh-3rem)]">
                     <p className="px-3 pt-2 pb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Navigation</p>
                     <TabsList variant="line" className="w-full items-stretch p-0">
                         <TabsTrigger value="members" className={TAB}><Users />Collaborateurs</TabsTrigger>
