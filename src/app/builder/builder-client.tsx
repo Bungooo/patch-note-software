@@ -381,7 +381,7 @@ export default function BuilderClient({ note, members, softwares }: {
                                                             id={`tablet-version-${index}`}
                                                             {...form.register(`sections.${index}.tabletVersion`)}
                                                             placeholder="ex : 2.4.1"
-                                                            className="w-full"
+                                                            className="h-10 py-2"
                                                         />
                                                     </div>
                                                 )}
