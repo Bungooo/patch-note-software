@@ -3,10 +3,12 @@
 import { useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { ArrowDown, ArrowUp, Check, Package, Pencil, Plus, RotateCcw, Trash2, Upload, X } from "lucide-react"
+import { ArrowDown, ArrowUp, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DEFAULT_LOGO } from "@/lib/logos"
 import type { Software } from "@/lib/types"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -31,11 +33,12 @@ function useAction() {
 }
 
 const LOGO_LABELS = {
-    plat: { title: "Logo à plat", hint: "Accueil et en-tête des sections du PDF", none: "Logo Ianord par défaut" },
-    "3d": { title: "Logo 3D", hint: "Page de garde du PDF", none: "Logo Ianord : absent de la page de garde" },
+    plat: { title: "logo à plat", none: "Logo Ianord par défaut" },
+    "3d": { title: "logo 3D", none: "Logo Ianord : absent de la page de garde" },
 }
 
-function LogoSlot({ software, kind }: { software: Software; kind: "3d" | "plat" }) {
+// Miniature du logo : un clic ouvre le choix du fichier ; ↺ revient au logo Ianord
+function LogoCell({ software, kind }: { software: Software; kind: "3d" | "plat" }) {
     const { run, isPending } = useAction()
     const input = useRef<HTMLInputElement>(null)
     const logo = kind === "3d" ? software.logo3d : software.logoFlat
@@ -49,42 +52,33 @@ function LogoSlot({ software, kind }: { software: Software; kind: "3d" | "plat" 
     }
 
     return (
-        <div className="flex-1 min-w-0 rounded-lg border p-3 space-y-2">
-            <div>
-                <p className="text-xs font-medium">{labels.title}</p>
-                <p className="text-[11px] text-muted-foreground">{labels.hint}</p>
-            </div>
-            <div className="flex items-center gap-3">
-                <div className="h-14 w-14 shrink-0 rounded-md bg-slate-50 flex items-center justify-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- aperçu de logos servis depuis la base */}
-                    <img
-                        src={logo?.url ?? DEFAULT_LOGO}
-                        alt=""
-                        className={logo ? "max-h-12 max-w-12 object-contain" : "max-h-8 max-w-8 object-contain opacity-40"}
-                    />
-                </div>
-                <div className="flex flex-col items-start gap-1 min-w-0">
-                    {!logo && <p className="text-[11px] text-muted-foreground">{labels.none}</p>}
-                    <div className="flex flex-wrap gap-1">
-                        <Button size="sm" variant="outline" className="h-7 text-xs" disabled={isPending} onClick={() => input.current?.click()}
-                            tooltip={`${logo ? "Remplacer le" : "Importer un"} ${labels.title.toLowerCase()} (SVG, PNG, WebP ou JPEG, 2 Mo max)`}>
-                            <Upload className="h-3 w-3" />{logo ? "Remplacer" : "Importer"}
-                        </Button>
-                        {logo && (
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 text-xs"
-                                disabled={isPending}
-                                tooltip="Revenir au logo Ianord par défaut"
-                                onClick={() => run(() => setSoftwareLogo(software.id, kind, null))}
-                            >
-                                <RotateCcw className="h-3 w-3" />Logo Ianord
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            </div>
+        <div className="flex items-center gap-1">
+            <Button
+                variant="outline"
+                className="h-11 w-11 p-1"
+                disabled={isPending}
+                onClick={() => input.current?.click()}
+                tooltip={`${logo ? "Remplacer" : "Importer"} le ${labels.title} (SVG, PNG, WebP ou JPEG, 2 Mo max)${logo ? "" : ` · ${labels.none}`}`}
+            >
+                {/* eslint-disable-next-line @next/next/no-img-element -- aperçu de logos servis depuis la base */}
+                <img
+                    src={logo?.url ?? DEFAULT_LOGO}
+                    alt={logo ? `${labels.title} de ${software.name}` : labels.none}
+                    className={logo ? "max-h-8 max-w-8 object-contain" : "max-h-5 max-w-5 object-contain opacity-30"}
+                />
+            </Button>
+            {logo && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground"
+                    disabled={isPending}
+                    tooltip="Revenir au logo Ianord par défaut"
+                    onClick={() => run(() => setSoftwareLogo(software.id, kind, null))}
+                >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                </Button>
+            )}
             <input
                 ref={input}
                 type="file"
@@ -99,127 +93,127 @@ function LogoSlot({ software, kind }: { software: Software; kind: "3d" | "plat" 
     )
 }
 
-function SoftwareRow({ software, isFirst, isLast }: { software: Software; isFirst: boolean; isLast: boolean }) {
+// Fenêtre d'ajout (sans `software`) ou de renommage d'un logiciel ; `children` est le bouton qui l'ouvre
+function SoftwareDialog({ software, children }: { software?: Software; children: React.ReactNode }) {
     const { run, isPending } = useAction()
-    const [editing, setEditing] = useState(false)
-    const [name, setName] = useState(software.name)
+    const [open, setOpen] = useState(false)
 
-    const cancel = () => {
-        setName(software.name)
-        setEditing(false)
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        const name = String(new FormData(e.currentTarget).get("name"))
+        run(() => (software ? renameSoftware(software.id, name) : addSoftware(name)), () => setOpen(false))
     }
 
     return (
-        <li className="px-6 py-4 space-y-3 group">
-            <div className="flex items-center gap-2">
-                {editing ? (
-                    <>
-                        <Input value={name} onChange={e => setName(e.target.value)} className="h-8 text-sm" aria-label="Nom du logiciel" autoFocus />
-                        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={cancel} disabled={isPending} tooltip="Annuler le renommage">
-                            <X className="h-3.5 w-3.5" />
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{software ? `Renommer ${software.name}` : "Ajouter un logiciel"}</DialogTitle>
+                    <DialogDescription>
+                        {software
+                            ? "Le nouveau nom est aussi appliqué aux notes existantes."
+                            : "Sans logo importé, le logo Ianord est utilisé. Seuls les logiciels avec un logo 3D apparaissent sur la page de garde du PDF."}
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-1.5">
+                        <label htmlFor="software-name" className="text-sm font-medium">Nom</label>
+                        <Input id="software-name" name="name" defaultValue={software?.name} placeholder="ex : WebPlanning" required autoFocus />
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" tooltip="Fermer sans enregistrer" onClick={() => setOpen(false)}>Annuler</Button>
+                        <Button type="submit" disabled={isPending} tooltip={software ? "Enregistrer le nouveau nom" : "Ajouter ce logiciel à la liste"}>
+                            {isPending ? "Enregistrement…" : software ? "Renommer" : "Ajouter le logiciel"}
                         </Button>
-                        <Button
-                            size="icon"
-                            className="h-8 w-8 shrink-0"
-                            disabled={isPending}
-                            tooltip="Enregistrer le nouveau nom"
-                            onClick={() => run(() => renameSoftware(software.id, name), () => setEditing(false))}
-                        >
-                            <Check className="h-3.5 w-3.5" />
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+function SoftwareRow({ software, isFirst, isLast }: { software: Software; isFirst: boolean; isLast: boolean }) {
+    const { run, isPending } = useAction()
+
+    return (
+        <TableRow>
+            <TableCell className="pl-4">
+                <div className="flex">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isPending || isFirst} tooltip="Monter dans la liste"
+                        onClick={() => run(() => moveSoftware(software.id, -1))}>
+                        <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isPending || isLast} tooltip="Descendre dans la liste"
+                        onClick={() => run(() => moveSoftware(software.id, 1))}>
+                        <ArrowDown className="h-4 w-4" />
+                    </Button>
+                </div>
+            </TableCell>
+            <TableCell className="font-medium">{software.name}</TableCell>
+            <TableCell><LogoCell software={software} kind="plat" /></TableCell>
+            <TableCell><LogoCell software={software} kind="3d" /></TableCell>
+            <TableCell className="pr-6">
+                <div className="flex justify-end gap-1">
+                    <SoftwareDialog software={software}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isPending} tooltip="Renommer le logiciel">
+                            <Pencil className="h-4 w-4" />
                         </Button>
-                    </>
-                ) : (
-                    <>
-                        <p className="flex-1 font-medium text-sm">{software.name}</p>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                            <Button size="icon" variant="ghost" className="h-8 w-8" disabled={isPending || isFirst} tooltip="Monter dans la liste"
-                                onClick={() => run(() => moveSoftware(software.id, -1))}>
-                                <ArrowUp className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8" disabled={isPending || isLast} tooltip="Descendre dans la liste"
-                                onClick={() => run(() => moveSoftware(software.id, 1))}>
-                                <ArrowDown className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-slate-700" disabled={isPending} tooltip="Renommer le logiciel"
-                                onClick={() => setEditing(true)}>
-                                <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <ConfirmDialog
-                                title={`Supprimer ${software.name} ?`}
-                                description="Les notes existantes le garderont, avec le logo Ianord."
-                                onConfirm={() => run(() => deleteSoftware(software.id))}
-                            >
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50" disabled={isPending} tooltip="Supprimer le logiciel">
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                            </ConfirmDialog>
-                        </div>
-                    </>
-                )}
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-                <LogoSlot software={software} kind="plat" />
-                <LogoSlot software={software} kind="3d" />
-            </div>
-        </li>
+                    </SoftwareDialog>
+                    <ConfirmDialog
+                        title={`Supprimer ${software.name} ?`}
+                        description="Les notes existantes le garderont, avec le logo Ianord."
+                        onConfirm={() => run(() => deleteSoftware(software.id))}
+                    >
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" disabled={isPending} tooltip="Supprimer le logiciel">
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </ConfirmDialog>
+                </div>
+            </TableCell>
+        </TableRow>
     )
 }
 
 export function SoftwaresPanel({ softwares }: { softwares: Software[] }) {
-    const { run, isPending } = useAction()
-    const [name, setName] = useState("")
-
-    const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-        run(() => addSoftware(name), () => setName(""))
-    }
-
     return (
-        // Deux colonnes : formulaire d'ajout à gauche (fixé au défilement), liste à droite
-        <div className="grid gap-6 items-start lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-            <Card className="lg:sticky lg:top-6">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                        <Plus className="h-4 w-4" />
-                        Ajouter un logiciel
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleAdd} className="flex gap-2">
-                        <Input value={name} onChange={e => setName(e.target.value)} placeholder="ex : WebPlanning" aria-label="Nom du nouveau logiciel" required />
-                        <Button type="submit" disabled={isPending} tooltip="Ajouter ce logiciel à la liste">
-                            <Plus className="h-4 w-4" />Ajouter
-                        </Button>
-                    </form>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                        Sans logo importé, le logo Ianord est utilisé. Seuls les logiciels avec un logo 3D apparaissent sur la page de garde du PDF.
-                    </p>
-                </CardContent>
-            </Card>
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                    {softwares.length} logiciel{softwares.length !== 1 ? "s" : ""} · cliquez sur un logo pour le remplacer
+                </p>
+                <SoftwareDialog>
+                    <Button tooltip="Ajouter un logiciel à la liste"><Plus className="h-4 w-4" />Ajouter un logiciel</Button>
+                </SoftwareDialog>
+            </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                        <Package className="h-4 w-4" />
-                        Logiciels
-                        <span className="ml-auto text-sm font-normal text-muted-foreground">
-                            {softwares.length} logiciel{softwares.length !== 1 ? "s" : ""}
-                        </span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                    {softwares.length === 0 ? (
-                        <p className="text-center text-sm text-muted-foreground py-10">
-                            Aucun logiciel pour l&apos;instant. Ajoutez-en un ci-dessus.
-                        </p>
-                    ) : (
-                        <ul className="divide-y">
+            <Card className="py-0 overflow-hidden">
+                {softwares.length === 0 ? (
+                    <p className="text-center text-sm text-muted-foreground py-10">Aucun logiciel pour l&apos;instant.</p>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="pl-6 w-24">Ordre</TableHead>
+                                <TableHead>Logiciel</TableHead>
+                                <TableHead>
+                                    Logo à plat
+                                    <span className="block text-xs font-normal text-muted-foreground">Accueil, en-têtes du PDF</span>
+                                </TableHead>
+                                <TableHead>
+                                    Logo 3D
+                                    <span className="block text-xs font-normal text-muted-foreground">Page de garde du PDF</span>
+                                </TableHead>
+                                <TableHead className="pr-6 text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {softwares.map((s, i) => (
                                 <SoftwareRow key={s.id} software={s} isFirst={i === 0} isLast={i === softwares.length - 1} />
                             ))}
-                        </ul>
-                    )}
-                </CardContent>
+                        </TableBody>
+                    </Table>
+                )}
             </Card>
         </div>
     )
