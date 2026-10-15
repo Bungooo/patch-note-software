@@ -24,6 +24,9 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus, ChevronDown, Settings } from "lucide-react"
 
+// Fond en plus de la coche : shadcn ne marque l'élément coché que par une petite coche
+const CHECKED = "mt-px data-[state=checked]:bg-blue-50 data-[state=checked]:text-blue-700 data-[state=checked]:font-medium data-[state=checked]:focus:bg-blue-100 data-[state=checked]:focus:text-blue-700"
+
 const MONTHS = [
     { value: "0", label: "Janvier" },
     { value: "1", label: "Février" },
@@ -120,6 +123,7 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="w-[240px]">
                                 <DropdownMenuCheckboxItem
+                                    className={CHECKED}
                                     checked={selected.length === 0}
                                     onCheckedChange={() => { setSelected([]); setVisibleCount(10) }}
                                     onSelect={e => e.preventDefault()}
@@ -129,6 +133,7 @@ export function PatchNoteDashboard({ notes, softwares }: { notes: PatchNote[]; s
                                 <DropdownMenuSeparator />
                                 {allSoftwares.map(s => (
                                     <DropdownMenuCheckboxItem
+                                        className={CHECKED}
                                         key={s.name}
                                         checked={selected.includes(s.name)}
                                         onCheckedChange={() => toggleSoftware(s.name)}
