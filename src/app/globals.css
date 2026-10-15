@@ -129,6 +129,17 @@
     @apply border-border outline-ring/50;
   }
 
+  /* Tailwind v4 ne met plus le pointeur sur les boutons : on le rétablit pour tout ce qui se clique */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="menuitemcheckbox"]:not([data-disabled]),
+  [role="menuitem"]:not([data-disabled]),
+  [role="option"]:not([data-disabled]),
+  [role="tab"]:not(:disabled),
+  label[for] {
+    cursor: pointer;
+  }
+
   h1,
   h2,
   h3,

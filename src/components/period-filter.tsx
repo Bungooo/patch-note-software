@@ -109,7 +109,7 @@ export function PeriodFilter({ dates, value, onChange }: {
                     <Button
                         size="sm"
                         variant="outline"
-                        className={cn("h-8 text-xs", value === String(year) && cn(SELECTED, "border-primary/30"))}
+                        className={cn("h-8 text-xs", value === String(year) && cn(SELECTED, "border-transparent"))}
                         disabled={!counts.get(String(year))}
                         onClick={() => select(String(year))}
                     >
