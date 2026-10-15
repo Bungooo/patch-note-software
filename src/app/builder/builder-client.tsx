@@ -369,7 +369,8 @@ export default function BuilderClient({ note, members, softwares }: {
                                                     <ArrowDown className="h-3.5 w-3.5" />
                                                 </Button>
                                             </div>
-                                            <AccordionContent className="pt-2 space-y-6">
+                                            {/* px-1 : AccordionContent coupe ce qui déborde, dont l'anneau de focus des champs */}
+                                            <AccordionContent className="pt-2 px-1 space-y-6">
                                                 {/* Champ version Tablette — visible uniquement si "Tablette" est sélectionné */}
                                                 {name === "Tablette" && (
                                                     <div className="space-y-2">
