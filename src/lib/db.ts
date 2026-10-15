@@ -9,4 +9,8 @@ const sql = postgres(connectionString, {
     max: 1 // Idéal pour le développement local
 })
 
+// Les types de postgres.js ne déclarent pas la transaction comme appelable en tag : on la retype
+export const transaction = <T>(fn: (tx: typeof sql) => Promise<T>) =>
+    sql.begin(tx => fn(tx as unknown as typeof sql)) as Promise<T>
+
 export default sql

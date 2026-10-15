@@ -1,50 +1,46 @@
 "use server"
 
 import sql from "@/lib/db"
-import { PatchNoteValues } from "@/lib/schema"
+import { PatchNoteSchema, type PatchNoteValues } from "@/lib/schema"
 import { revalidatePath } from "next/cache"
 
-export async function savePatchNote(data: PatchNoteValues, id?: string) {
-  try {
-    const isoDate = new Date(data.date).toISOString()
-    const jsonContent = JSON.stringify(data.sections)
+type Result = { success: true } | { success: false; error: string }
 
+export async function savePatchNote(data: PatchNoteValues, id?: string): Promise<Result> {
+  const parsed = PatchNoteSchema.safeParse(data)
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
+  const { date, intro, author, sections } = parsed.data
+
+  try {
     if (id) {
-      // MODE ÉDITION : On met à jour la note existante
       await sql`
-        UPDATE "PatchNote" SET
-          date = ${isoDate},
-          intro = ${data.intro},
-          author = ${data.author},
-          content = ${jsonContent}
+        UPDATE "PatchNote"
+        SET date = ${date}, intro = ${intro}, author = ${author}, content = ${sql.json(sections)}
         WHERE id = ${id}
       `
     } else {
-      // MODE CRÉATION : On insère une nouvelle ligne
       await sql`
-        INSERT INTO "PatchNote" (id, date, intro, author, content, "createdAt")
-        VALUES (${crypto.randomUUID()}, ${isoDate}, ${data.intro}, ${data.author}, ${jsonContent}, NOW())
+        INSERT INTO "PatchNote" (id, date, intro, author, content)
+        VALUES (${crypto.randomUUID()}, ${date}, ${intro}, ${author}, ${sql.json(sections)})
       `
     }
-
-    revalidatePath("/")
-    return { success: true }
-  } catch (error: any) {
-    console.error("Erreur Neon:", error.message)
-    return { success: false, error: error.message }
+  } catch (error) {
+    console.error("Erreur enregistrement note :", error)
+    return { success: false, error: (error as Error).message }
   }
+
+  revalidatePath("/", "layout")
+  return { success: true }
 }
 
-export async function deletePatchNote(id: string) {
+export async function deletePatchNote(id: string): Promise<Result> {
   try {
-    // Suppression physique dans la table Neon
     await sql`DELETE FROM "PatchNote" WHERE id = ${id}`
-
-    // On rafraîchit la page d'accueil pour faire disparaître la carte
-    revalidatePath("/")
-    return { success: true }
-  } catch (error: any) {
-    console.error("Erreur suppression Neon:", error.message)
-    return { success: false, error: error.message }
+  } catch (error) {
+    console.error("Erreur suppression note :", error)
+    return { success: false, error: (error as Error).message }
   }
+
+  revalidatePath("/", "layout")
+  return { success: true }
 }

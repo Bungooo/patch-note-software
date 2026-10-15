@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google"; // Geist removed
+import { Inter, Poppins } from "next/font/google";
+import { BrandHeader } from "@/components/brand-header";
 import "./globals.css";
 
 const inter = Inter({
@@ -16,14 +17,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Ianord Patch Notes",
   description: "Logiciel de gestion de notes de mises à jour",
-  icons: {
-    icon: "/logos/ianord.ico",
-  },
 };
-
-import { BrandHeader } from "@/components/BrandHeader";
-
-// ... existing imports
 
 export default function RootLayout({
   children,
@@ -31,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <body
         className={`${inter.variable} ${poppins.variable} antialiased font-sans`}
         style={{ backgroundColor: "var(--background-color)" }}
